@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1018" />
   <meta name="description" content="Sudoproyective — puzzle matemático inspirado en geometría afín finita." />
-  <title>Sudoproyective · v0.2</title>
+  <title>Sudoproyective · v0.3</title>
   <link rel="stylesheet" href="styles.css" />
   <style>
     .cell.number-focus:not(.selected) {
@@ -20,13 +20,15 @@
       color: #e8f1ff;
       box-shadow: inset 0 0 0 1px rgba(114,167,255,.28);
     }
+    .world-section + .world-section { margin-top: 42px; }
+    .world-card { border-color: rgba(114,167,255,.24); }
   </style>
 </head>
 <body>
   <main class="app-shell">
     <header class="topbar">
       <div>
-        <p class="eyebrow">Prototipo v0.2</p>
+        <p class="eyebrow">Prototipo v0.3</p>
         <h1>Sudoproyective</h1>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
@@ -44,7 +46,7 @@
           <div>
             <p class="hero-kicker">Fila · columna · ruta</p>
             <h2>Tu recorrido</h2>
-            <p>Consigue estrellas, desbloquea nuevos niveles y mejora tus marcas. Las estrellas gastadas en pistas no reducen tu progreso total.</p>
+            <p>Consigue estrellas, desbloquea nuevos niveles y descubre nuevas direcciones. Las estrellas gastadas en pistas no reducen tu progreso total.</p>
           </div>
           <div class="progress-card">
             <span class="metric-label">Próximo desbloqueo</span>
@@ -88,6 +90,10 @@
           <p>Durante los niveles normales puedes ocultar o mostrar la ruta seleccionada. La regla sigue existiendo aunque la ocultes.</p>
         </div>
         <div class="info-card">
+          <strong>Las rutas pueden cambiar de dirección</strong>
+          <p>En el Mundo 1 la ruta avanza una casilla vertical por cada columna. En el Mundo 2 avanza dos. La casilla seleccionada siempre te muestra la ruta correspondiente al nivel.</p>
+        </div>
+        <div class="info-card">
           <strong>Sin corrección inmediata</strong>
           <p>Desde el nivel 2, el juego no descarta números ni te dice si una jugada es correcta. Cuando llenes todo el tablero sólo te indicará si la solución completa es válida o no.</p>
         </div>
@@ -102,7 +108,7 @@
           <div>
             <p class="hero-kicker">Progreso permanente</p>
             <h2>Trofeos</h2>
-            <p>Por ahora son hitos simples. Más adelante podremos reemplazarlos por recompensas visuales, coleccionables o cosméticas.</p>
+            <p>Los hitos crecen con los mundos. Más adelante podremos reemplazarlos o complementarlos con recompensas visuales, coleccionables o cosméticas.</p>
           </div>
           <div class="reward-stats">
             <div><span>Total</span><strong id="totalStarsRewards">0★</strong></div>
@@ -129,6 +135,14 @@
           <p id="tutorialText"></p>
         </div>
         <button id="tutorialNextBtn" class="small-btn">Siguiente</button>
+      </div>
+
+      <div id="directionCallout" class="tutorial-callout hidden" role="status">
+        <div>
+          <strong id="directionTitle">Nueva ruta</strong>
+          <p id="directionText"></p>
+        </div>
+        <button id="directionDismissBtn" class="small-btn">Entendido</button>
       </div>
 
       <div class="board-wrap">
@@ -173,12 +187,12 @@
     <div class="rules-cards">
       <article><span>1</span><div><strong>Completa con 1–7</strong><p>Llena todas las casillas vacías.</p></div></article>
       <article><span>2</span><div><strong>Sin repetir</strong><p>No repitas números en ninguna fila ni columna.</p></div></article>
-      <article><span>3</span><div><strong>Mira la ruta</strong><p>Las siete casillas de la ruta tampoco pueden repetir números.</p></div></article>
+      <article><span>3</span><div><strong>Sigue la ruta</strong><p>Las siete casillas iluminadas de la ruta tampoco pueden repetir números.</p></div></article>
     </div>
     <div class="route-demo" aria-label="La ruta continúa por el borde opuesto">
       <span>↘</span><span>↘</span><span>↘</span><span>↘</span><span class="jump">⤴</span><span>↘</span><span>↘</span>
     </div>
-    <p style="color:var(--muted);line-height:1.5;margin-bottom:0;">Una ruta puede salir por un borde y continuar por el lado opuesto. Al seleccionar una casilla puedes mostrar su ruta en dorado.</p>
+    <p style="color:var(--muted);line-height:1.5;margin-bottom:0;">Una ruta puede salir por un borde y continuar por el lado opuesto. En mundos posteriores la ruta puede avanzar con otra dirección, pero la regla siempre es la misma: sin repetir.</p>
   </dialog>
 
   <dialog id="invalidDialog" class="modal victory-modal">
