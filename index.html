@@ -259,6 +259,16 @@
           return;
         }
 
+        const cell = event.target.closest('.cell');
+        if (cell) {
+          const isEmptyCell = Boolean(cell.querySelector('.notes-grid')) || cell.textContent.trim() === '';
+          if (isEmptyCell) {
+            activeNumber = null;
+            scheduleNumberFocus();
+          }
+          return;
+        }
+
         if (event.target.closest('#backBtn, #levelsBtn, #nextLevelBtn, #tutorialBtn, .level-card')) {
           activeNumber = null;
           scheduleNumberFocus();
