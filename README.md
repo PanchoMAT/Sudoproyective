@@ -2,7 +2,7 @@
 
 Prototipo de puzzle matemático independiente inspirado en geometría afín finita.
 
-## v0.3
+## v0.3.1
 
 La versión actual usa un tablero `7 × 7` con símbolos `1,…,7` y tres tipos de unidades `AllDifferent` en cada nivel:
 
@@ -34,20 +34,13 @@ Contiene 6 niveles nuevos, separados en Exploración, Dominio y Desafío. Al ava
 
 Todos los 24 niveles incluidos tienen solución única bajo la familia de rutas que les corresponde.
 
-### Progresión
+### Acceso y progresión
 
-La v0.3 contiene 24 niveles:
+Todos los niveles están desbloqueados desde el inicio. El jugador puede entrar directamente a cualquier puzzle de cualquier mundo.
 
-1. **Niveles 1–6 — Iniciación.**
-2. **Niveles 7–12 — Intermedio.**
-3. **Niveles 13–18 — Avanzado.**
-4. **Niveles 19–20 — Exploración de Dirección 2.**
-5. **Niveles 21–22 — Dominio de Dirección 2.**
-6. **Niveles 23–24 — Desafío de Dirección 2.**
+Las estrellas ya no sirven para abrir niveles: representan el grado de maestría conseguido en cada puzzle y en cada mundo.
 
-### Estrellas, pistas y desbloqueos
-
-Cada nivel entrega de 1 a 3 estrellas:
+Cada nivel entrega:
 
 - 3 estrellas: completar sin pistas;
 - 2 estrellas: completar usando una pista;
@@ -55,23 +48,38 @@ Cada nivel entrega de 1 a 3 estrellas:
 
 Se mantienen dos cantidades distintas:
 
-- **estrellas totales:** suma de las mejores marcas históricas; nunca disminuye y sirve para desbloquear niveles;
+- **estrellas totales:** suma de las mejores marcas históricas y base del sistema de trofeos;
 - **estrellas disponibles:** saldo que puede gastarse en pistas. Cada pista cuesta 1 estrella disponible.
 
-Repetir un nivel sólo entrega la diferencia si se mejora la mejor marca, evitando obtener estrellas infinitas del mismo puzzle.
+Gastar estrellas disponibles no reduce el total histórico ni hace perder trofeos. Repetir un nivel sólo entrega la diferencia si se mejora la mejor marca.
 
-### Trofeos provisionales
+### Trofeos por mundo
 
-- Brújula de Bronce — completar nivel 6.
-- Cartógrafo de Plata — completar nivel 12.
-- Geómetra de Oro — completar nivel 18.
-- Navegante de Dos Rutas — completar nivel 24.
-- Horizonte Perfecto — conseguir las 72 estrellas.
+Cada mundo tiene tres rangos de maestría:
+
+**Mundo 1 — 18 niveles, máximo 54★**
+
+- 🥉 Bronce: 18★.
+- 🥈 Plata: 36★.
+- 🥇 Oro: 54★.
+
+**Mundo 2 — 6 niveles, máximo 18★**
+
+- 🥉 Bronce: 6★.
+- 🥈 Plata: 12★.
+- 🥇 Oro: 18★.
+
+Los umbrales equivalen de forma natural a un promedio de 1, 2 y 3 estrellas por nivel respectivamente.
+
+**🏆 Trofeo de Platino**
+
+Se obtiene únicamente al conseguir el trofeo de oro en todos los mundos disponibles.
 
 ### Interfaz
 
 - navegación por pestañas: Niveles, Tutorial, Reglas y Trofeos;
 - tutorial opcional y separado del progreso;
+- todos los niveles accesibles desde el inicio;
 - rutas visibles/ocultas a voluntad en niveles normales;
 - explicación breve al descubrir una nueva dirección;
 - notas/candidatos;
@@ -105,4 +113,4 @@ Las pruebas verifican:
 - una configuración futura con pendientes 1 y 2 simultáneas: 28 unidades, 4 pertenencias y 24 pares por celda;
 - validez de todas las soluciones;
 - unicidad de los 24 puzzles;
-- coherencia de los umbrales de desbloqueo.
+- ids y numeración únicos para todos los niveles.
