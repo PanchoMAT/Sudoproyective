@@ -3,37 +3,93 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#101622" />
+  <meta name="theme-color" content="#0b1018" />
   <meta name="description" content="Sudoproyective — puzzle matemático inspirado en geometría afín finita." />
-  <title>Sudoproyective · Prototipo</title>
+  <title>Sudoproyective · v0.2</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main class="app-shell">
     <header class="topbar">
       <div>
-        <p class="eyebrow">Prototipo v0.1</p>
+        <p class="eyebrow">Prototipo v0.2</p>
         <h1>Sudoproyective</h1>
       </div>
-      <button id="rulesBtn" class="icon-btn" aria-label="Ver reglas">?</button>
+      <div class="star-summary" aria-label="Resumen de estrellas">
+        <span title="Estrellas totales">★ <strong id="totalStarsTop">0</strong></span>
+        <span class="spendable" title="Estrellas disponibles">✦ <strong id="availableStarsTop">0</strong></span>
+      </div>
     </header>
 
-    <section id="levelScreen" class="screen active" aria-labelledby="levelsTitle">
-      <div class="hero-card">
-        <p class="hero-kicker">Fila · columna · ruta</p>
-        <h2 id="levelsTitle">Sin repetir.</h2>
-        <p>Completa cada tablero con los números del 1 al 7. Las rutas pueden salir por un borde y continuar por el opuesto.</p>
-        <button id="tutorialBtn" class="primary-btn">Jugar tutorial</button>
+    <section id="hubScreen" class="screen active">
+      <div id="levelsPanel" class="tab-panel active" data-panel="levels">
+        <div class="hero-card compact-hero">
+          <div>
+            <p class="hero-kicker">Fila · columna · ruta</p>
+            <h2>Tu recorrido</h2>
+            <p>Consigue estrellas, desbloquea nuevos niveles y mejora tus marcas. Las estrellas gastadas en pistas no reducen tu progreso total.</p>
+          </div>
+          <div class="progress-card">
+            <span class="metric-label">Próximo desbloqueo</span>
+            <strong id="nextUnlockText">Nivel 2 · 1★</strong>
+            <div class="progress-track"><span id="unlockProgress"></span></div>
+          </div>
+        </div>
+
+        <div id="difficultySections"></div>
+        <button id="resetProgressBtn" class="text-btn danger-text">Reiniciar progreso</button>
       </div>
 
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">Primer recorrido</p>
-          <h2>Niveles</h2>
+      <div id="tutorialPanel" class="tab-panel" data-panel="tutorial">
+        <div class="hero-card">
+          <p class="hero-kicker">Aprende jugando</p>
+          <h2>Tutorial</h2>
+          <p>El tutorial es opcional. En pocos pasos te muestra filas, columnas, rutas y cómo una ruta puede continuar por el borde opuesto.</p>
+          <button id="tutorialBtn" class="primary-btn">Jugar tutorial</button>
         </div>
-        <button id="resetProgressBtn" class="text-btn">Reiniciar progreso</button>
+        <div class="info-card">
+          <strong>No afecta tu progreso</strong>
+          <p>Puedes repetirlo cuando quieras. No gasta estrellas, no modifica niveles y no cuenta para trofeos.</p>
+        </div>
       </div>
-      <div id="levelGrid" class="level-grid"></div>
+
+      <div id="rulesPanel" class="tab-panel" data-panel="rules">
+        <div class="hero-card">
+          <p class="hero-kicker">Cómo jugar</p>
+          <h2>Tres reglas</h2>
+          <div class="rules-cards">
+            <article><span>1</span><div><strong>Fila</strong><p>No repitas números del 1 al 7.</p></div></article>
+            <article><span>2</span><div><strong>Columna</strong><p>No repitas números del 1 al 7.</p></div></article>
+            <article><span>3</span><div><strong>Ruta</strong><p>Las siete casillas de una ruta tampoco pueden repetir números.</p></div></article>
+          </div>
+        </div>
+        <div class="info-card route-rule-card">
+          <strong>Las rutas atraviesan los bordes</strong>
+          <div class="route-demo" aria-label="Ejemplo de ruta envolvente">
+            <span>↘</span><span>↘</span><span>↘</span><span>↘</span><span class="jump">⤴</span><span>↘</span><span>↘</span>
+          </div>
+          <p>Durante los niveles normales puedes ocultar o mostrar la ruta seleccionada. La regla sigue existiendo aunque la ocultes.</p>
+        </div>
+        <div class="info-card">
+          <strong>Estrellas y pistas</strong>
+          <p>Completar un nivel entrega entre 1 y 3 estrellas. Tu total histórico desbloquea niveles; tu saldo disponible puede gastarse en pistas.</p>
+        </div>
+      </div>
+
+      <div id="rewardsPanel" class="tab-panel" data-panel="rewards">
+        <div class="hero-card compact-hero">
+          <div>
+            <p class="hero-kicker">Progreso permanente</p>
+            <h2>Trofeos</h2>
+            <p>Por ahora son hitos simples. Más adelante podremos reemplazarlos por recompensas visuales, coleccionables o cosméticas.</p>
+          </div>
+          <div class="reward-stats">
+            <div><span>Total</span><strong id="totalStarsRewards">0★</strong></div>
+            <div><span>Disponibles</span><strong id="availableStarsRewards">0★</strong></div>
+          </div>
+        </div>
+        <div id="trophyGrid" class="trophy-grid"></div>
+      </div>
     </section>
 
     <section id="gameScreen" class="screen" aria-labelledby="gameTitle">
@@ -56,16 +112,19 @@
 
       <div class="board-wrap">
         <div id="board" class="board" role="grid" aria-label="Tablero 7 por 7"></div>
-        <div id="wrapHint" class="wrap-hint" aria-hidden="true"></div>
       </div>
 
-      <div class="status-row">
+      <div class="status-row game-tools">
         <button id="notesBtn" class="mode-btn" aria-pressed="false">Notas <span>○</span></button>
+        <button id="routesBtn" class="mode-btn active" aria-pressed="true">Rutas <span>●</span></button>
+        <button id="hintBtn" class="mode-btn">Pista · 1★</button>
+      </div>
+      <div class="status-row secondary-tools">
         <label class="switch-label">
           <input id="errorToggle" type="checkbox" checked />
           <span>Marcar errores</span>
         </label>
-        <button id="hintBtn" class="mode-btn">Pista</button>
+        <span id="gameStarsBalance" class="mini-balance">Disponibles: 0★</span>
       </div>
 
       <div class="number-pad" aria-label="Selector de números">
@@ -73,28 +132,24 @@
         <button id="eraseBtn" class="erase-btn" aria-label="Borrar">⌫</button>
       </div>
     </section>
+
+    <nav id="mainNav" class="main-nav" aria-label="Navegación principal">
+      <button class="nav-btn active" data-tab="levels"><span>▦</span>Niveles</button>
+      <button class="nav-btn" data-tab="tutorial"><span>▶</span>Tutorial</button>
+      <button class="nav-btn" data-tab="rules"><span>?</span>Reglas</button>
+      <button class="nav-btn" data-tab="rewards"><span>🏆</span>Trofeos</button>
+    </nav>
   </main>
 
-  <dialog id="rulesDialog" class="modal">
-    <button class="modal-close" data-close="rulesDialog" aria-label="Cerrar">×</button>
-    <p class="eyebrow">Cómo jugar</p>
-    <h2>Tres cosas que mirar</h2>
-    <ol class="rules-list">
-      <li><strong>Fila:</strong> no repitas números.</li>
-      <li><strong>Columna:</strong> no repitas números.</li>
-      <li><strong>Ruta:</strong> no repitas números.</li>
-    </ol>
-    <div class="route-demo" aria-label="Ejemplo de ruta envolvente">
-      <span>↘</span><span>↘</span><span>↘</span><span>↘</span><span class="jump">⤴</span><span>↘</span><span>↘</span>
-    </div>
-    <p>Una ruta puede salir por un borde del tablero y continuar desde el borde opuesto. Cuando selecciones una casilla, su ruta se iluminará.</p>
-  </dialog>
+  <div id="toast" class="toast hidden" role="status"></div>
 
   <dialog id="victoryDialog" class="modal victory-modal">
     <div class="victory-mark">✓</div>
-    <p class="eyebrow">Ruta completada</p>
-    <h2>¡Nivel resuelto!</h2>
+    <p class="eyebrow">Nivel completado</p>
+    <h2 id="victoryTitle">¡Muy bien!</h2>
+    <div id="victoryStars" class="victory-stars" aria-label="Estrellas obtenidas">★★★</div>
     <p id="victoryStats"></p>
+    <p id="victoryReward" class="reward-message"></p>
     <div class="modal-actions">
       <button id="levelsBtn" class="secondary-btn">Ver niveles</button>
       <button id="nextLevelBtn" class="primary-btn">Siguiente</button>
