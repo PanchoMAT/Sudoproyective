@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1018" />
   <meta name="description" content="Sudoproyective — puzzle matemático inspirado en geometría afín finita." />
-  <title>Sudoproyective · v0.3</title>
+  <title>Sudoproyective · v0.3.1</title>
   <link rel="stylesheet" href="styles.css" />
   <style>
     .cell.number-focus:not(.selected) {
@@ -28,7 +28,7 @@
   <main class="app-shell">
     <header class="topbar">
       <div>
-        <p class="eyebrow">Prototipo v0.3</p>
+        <p class="eyebrow">Prototipo v0.3.1</p>
         <h1>Sudoproyective</h1>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
@@ -46,11 +46,11 @@
           <div>
             <p class="hero-kicker">Fila · columna · ruta</p>
             <h2>Tu recorrido</h2>
-            <p>Consigue estrellas, desbloquea nuevos niveles y descubre nuevas direcciones. Las estrellas gastadas en pistas no reducen tu progreso total.</p>
+            <p>Todos los niveles están disponibles desde el inicio. Las estrellas ya no abren contenido: ahora representan qué tan perfectamente dominas cada mundo.</p>
           </div>
           <div class="progress-card">
-            <span class="metric-label">Próximo desbloqueo</span>
-            <strong id="nextUnlockText">Nivel 2 · 1★</strong>
+            <span class="metric-label">Camino al platino</span>
+            <strong id="nextUnlockText">Perfección global · 0/72★</strong>
             <div class="progress-track"><span id="unlockProgress"></span></div>
           </div>
         </div>
@@ -98,17 +98,17 @@
           <p>Desde el nivel 2, el juego no descarta números ni te dice si una jugada es correcta. Cuando llenes todo el tablero sólo te indicará si la solución completa es válida o no.</p>
         </div>
         <div class="info-card">
-          <strong>Estrellas y pistas</strong>
-          <p>Completar un nivel entrega 3★ sin pistas, 2★ usando una pista y 1★ usando dos o más. Tu total histórico desbloquea niveles; tu saldo disponible puede gastarse en pistas.</p>
+          <strong>Estrellas, pistas y maestría</strong>
+          <p>Completar un nivel entrega 3★ sin pistas, 2★ usando una pista y 1★ usando dos o más. Todos los niveles están abiertos. Las estrellas históricas determinan tus trofeos de bronce, plata y oro en cada mundo; las estrellas disponibles pueden gastarse en pistas.</p>
         </div>
       </div>
 
       <div id="rewardsPanel" class="tab-panel" data-panel="rewards">
         <div class="hero-card compact-hero">
           <div>
-            <p class="hero-kicker">Progreso permanente</p>
+            <p class="hero-kicker">Maestría por mundo</p>
             <h2>Trofeos</h2>
-            <p>Los hitos crecen con los mundos. Más adelante podremos reemplazarlos o complementarlos con recompensas visuales, coleccionables o cosméticas.</p>
+            <p>Cada mundo entrega bronce, plata y oro según sus estrellas. Si consigues oro en todos los mundos, obtienes el trofeo especial de platino.</p>
           </div>
           <div class="reward-stats">
             <div><span>Total</span><strong id="totalStarsRewards">0★</strong></div>
