@@ -1,26 +1,32 @@
 import { SIZE, SYMBOLS, cellKey, makeConstraintSystem, routeCellsFor } from './geometry.js';
-import { LEVELS } from './puzzles.js';
+import { LEVELS, DIFFICULTIES } from './puzzles.js';
 
 const $ = (selector) => document.querySelector(selector);
 const boardEl = $('#board');
-const levelScreen = $('#levelScreen');
+const hubScreen = $('#hubScreen');
 const gameScreen = $('#gameScreen');
-const levelGrid = $('#levelGrid');
-const tutorialCallout = $('#tutorialCallout');
-const tutorialTitle = $('#tutorialTitle');
-const tutorialText = $('#tutorialText');
-const tutorialNextBtn = $('#tutorialNextBtn');
-const rulesDialog = $('#rulesDialog');
+const mainNav = $('#mainNav');
+const difficultySections = $('#difficultySections');
 const victoryDialog = $('#victoryDialog');
+const tutorialCallout = $('#tutorialCallout');
 const system = makeConstraintSystem([1]);
 
-const STORAGE_KEY = 'sudoproyective-v01';
+const STORAGE_KEY = 'sudoproyective-v02';
+const HINT_COST = 1;
+const TROPHIES = [
+  { id: 'bronze', icon: '🥉', name: 'Brújula de Bronce', text: 'Completa el nivel 6.', level: 6 },
+  { id: 'silver', icon: '🥈', name: 'Cartógrafo de Plata', text: 'Completa el nivel 12.', level: 12 },
+  { id: 'gold', icon: '🥇', name: 'Geómetra de Oro', text: 'Completa el nivel 18.', level: 18 },
+  { id: 'master', icon: '🏆', name: 'Horizonte Perfecto', text: 'Consigue las 54 estrellas.', stars: 54 },
+];
+
 const state = {
   levelIndex: 0,
   values: [],
   notes: new Map(),
   selected: null,
   notesMode: false,
+  routesVisible: true,
   mistakes: 0,
   hints: 0,
   elapsed: 0,
@@ -28,14 +34,20 @@ const state = {
   startedAt: null,
   tutorialStep: -1,
   isTutorial: false,
+  activeTab: 'levels',
   saved: loadSaved(),
 };
 
+function freshSave() {
+  return { levels: {}, bestStars: {}, availableStars: 0, trophies: {} };
+}
+
 function loadSaved() {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { levels: {}, completed: {} };
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    return { ...freshSave(), ...(raw || {}) };
   } catch {
-    return { levels: {}, completed: {} };
+    return freshSave();
   }
 }
 
@@ -43,49 +55,168 @@ function persist() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state.saved));
 }
 
+function totalStars() {
+  return Object.values(state.saved.bestStars).reduce((sum, n) => sum + Number(n || 0), 0);
+}
+
+function maxCompletedLevel() {
+  return LEVELS.reduce((max, item) => state.saved.bestStars[item.id] ? Math.max(max, item.number) : max, 0);
+}
+
 function cloneGrid(grid) { return grid.map((row) => [...row]); }
 function level() { return LEVELS[state.levelIndex]; }
 function isGiven(row, col) { return level().puzzle[row][col] !== 0; }
+function isUnlocked(item) { return totalStars() >= item.unlockStars; }
+
+function setTab(tab) {
+  state.activeTab = tab;
+  document.querySelectorAll('.tab-panel').forEach((panel) => {
+    panel.classList.toggle('active', panel.dataset.panel === tab);
+  });
+  document.querySelectorAll('.nav-btn').forEach((button) => {
+    button.classList.toggle('active', button.dataset.tab === tab);
+  });
+  renderHub();
+}
+
+function renderHub() {
+  renderStarSummaries();
+  renderLevels();
+  renderTrophies();
+  renderUnlockProgress();
+}
+
+function renderStarSummaries() {
+  const total = totalStars();
+  const available = state.saved.availableStars;
+  $('#totalStarsTop').textContent = total;
+  $('#availableStarsTop').textContent = available;
+  $('#totalStarsRewards').textContent = `${total}★`;
+  $('#availableStarsRewards').textContent = `${available}★`;
+  $('#gameStarsBalance').textContent = `Disponibles: ${available}★`;
+}
+
+function renderUnlockProgress() {
+  const total = totalStars();
+  const next = LEVELS.find((item) => item.unlockStars > total);
+  if (!next) {
+    $('#nextUnlockText').textContent = 'Todos los niveles desbloqueados';
+    $('#unlockProgress').style.width = '100%';
+    return;
+  }
+  const previous = [...LEVELS].reverse().find((item) => item.unlockStars <= total)?.unlockStars || 0;
+  const span = Math.max(1, next.unlockStars - previous);
+  const progress = Math.max(0, Math.min(1, (total - previous) / span));
+  $('#nextUnlockText').textContent = `Nivel ${next.number} · ${next.unlockStars}★`;
+  $('#unlockProgress').style.width = `${Math.round(progress * 100)}%`;
+}
 
 function renderLevels() {
-  levelGrid.innerHTML = '';
-  LEVELS.forEach((item, index) => {
-    const button = document.createElement('button');
-    button.className = `level-card ${state.saved.completed[item.id] ? 'completed' : ''}`;
-    button.innerHTML = `
-      <span class="level-number">Nivel ${item.number} · ${item.difficulty}</span>
-      <span class="level-name">${item.name}</span>
-      <span class="level-clues">${item.subtitle}</span>
-      ${state.saved.completed[item.id] ? '<span class="complete-badge">✓</span>' : ''}
+  difficultySections.innerHTML = '';
+  for (const difficulty of DIFFICULTIES) {
+    const group = LEVELS.filter((item) => item.difficulty === difficulty);
+    const section = document.createElement('section');
+    section.className = 'difficulty-section';
+    const earned = group.reduce((sum, item) => sum + (state.saved.bestStars[item.id] || 0), 0);
+    section.innerHTML = `
+      <div class="section-heading difficulty-heading">
+        <div>
+          <p class="eyebrow">${difficulty}</p>
+          <h2>${difficulty === 'Iniciación' ? 'Aprender la estructura' : difficulty === 'Intermedio' ? 'Cruzar información' : 'Leer la geometría'}</h2>
+        </div>
+        <span class="group-stars">${earned}/${group.length * 3}★</span>
+      </div>
+      <div class="level-grid"></div>
     `;
-    button.addEventListener('click', () => startLevel(index, false));
-    levelGrid.appendChild(button);
+    const grid = section.querySelector('.level-grid');
+    group.forEach((item) => grid.appendChild(makeLevelCard(item)));
+    difficultySections.appendChild(section);
+  }
+}
+
+function makeLevelCard(item) {
+  const unlocked = isUnlocked(item);
+  const best = state.saved.bestStars[item.id] || 0;
+  const button = document.createElement('button');
+  button.className = `level-card ${best ? 'completed' : ''} ${unlocked ? '' : 'locked'}`;
+  button.disabled = !unlocked;
+  button.innerHTML = `
+    <span class="level-number">Nivel ${item.number}</span>
+    <span class="level-name">${unlocked ? item.name : 'Bloqueado'}</span>
+    <span class="level-clues">${unlocked ? item.subtitle : `Necesitas ${item.unlockStars}★ totales`}</span>
+    <span class="card-stars" aria-label="${best} estrellas">${starString(best)}</span>
+    ${unlocked ? '' : '<span class="lock-mark">🔒</span>'}
+  `;
+  if (unlocked) button.addEventListener('click', () => startLevel(item.number - 1, false));
+  return button;
+}
+
+function renderTrophies() {
+  const grid = $('#trophyGrid');
+  grid.innerHTML = '';
+  TROPHIES.forEach((trophy) => {
+    const earned = trophyEarned(trophy);
+    if (earned) state.saved.trophies[trophy.id] = true;
+    const card = document.createElement('article');
+    card.className = `trophy-card ${earned ? 'earned' : 'locked'}`;
+    card.innerHTML = `
+      <div class="trophy-icon">${earned ? trophy.icon : '◌'}</div>
+      <div><strong>${trophy.name}</strong><p>${trophy.text}</p></div>
+      <span class="trophy-state">${earned ? 'Conseguido' : 'Pendiente'}</span>
+    `;
+    grid.appendChild(card);
   });
+  persist();
+}
+
+function trophyEarned(trophy) {
+  if (trophy.level) return maxCompletedLevel() >= trophy.level;
+  if (trophy.stars) return totalStars() >= trophy.stars;
+  return false;
+}
+
+function starString(count) {
+  return `${'★'.repeat(count)}${'☆'.repeat(3 - count)}`;
 }
 
 function startLevel(index, tutorial = false) {
+  const item = LEVELS[index];
+  if (!tutorial && !isUnlocked(item)) {
+    showToast(`Necesitas ${item.unlockStars}★ totales para desbloquear este nivel.`);
+    return;
+  }
+
   state.levelIndex = index;
   state.isTutorial = tutorial;
-  const item = LEVELS[index];
   const savedLevel = tutorial ? null : state.saved.levels[item.id];
   state.values = savedLevel?.values ? cloneGrid(savedLevel.values) : cloneGrid(item.puzzle);
-  state.notes = tutorial
-    ? new Map()
-    : new Map(Object.entries(savedLevel?.notes || {}).map(([key, value]) => [key, new Set(value)]));
+  state.notes = tutorial ? new Map() : new Map(
+    Object.entries(savedLevel?.notes || {}).map(([key, value]) => [key, new Set(value)])
+  );
   state.mistakes = tutorial ? 0 : (savedLevel?.mistakes || 0);
   state.hints = tutorial ? 0 : (savedLevel?.hints || 0);
   state.elapsed = tutorial ? 0 : (savedLevel?.elapsed || 0);
   state.selected = null;
   state.notesMode = false;
+  state.routesVisible = true;
   state.tutorialStep = tutorial ? 0 : -1;
+
   $('#notesBtn').classList.remove('active');
   $('#notesBtn').setAttribute('aria-pressed', 'false');
-  $('#gameMeta').textContent = tutorial ? 'Tutorial' : `Nivel ${item.number} · ${item.difficulty}`;
+  $('#routesBtn').classList.add('active');
+  $('#routesBtn').setAttribute('aria-pressed', 'true');
+  $('#routesBtn').classList.toggle('hidden', tutorial);
+  $('#hintBtn').classList.toggle('hidden', tutorial);
+  $('#gameStarsBalance').classList.toggle('hidden', tutorial);
+  $('#gameMeta').textContent = tutorial ? 'Tutorial opcional' : `Nivel ${item.number} · ${item.difficulty}`;
   $('#gameTitle').textContent = tutorial ? 'Aprende las rutas' : item.name;
-  levelScreen.classList.remove('active');
+
+  hubScreen.classList.remove('active');
   gameScreen.classList.add('active');
+  mainNav.classList.add('hidden');
   renderBoard();
   renderNumberPad();
+  renderStarSummaries();
   updateTutorial();
   startTimer();
 }
@@ -94,9 +225,10 @@ function leaveGame() {
   saveCurrent();
   stopTimer();
   gameScreen.classList.remove('active');
-  levelScreen.classList.add('active');
+  hubScreen.classList.add('active');
+  mainNav.classList.remove('hidden');
   tutorialCallout.classList.add('hidden');
-  renderLevels();
+  renderHub();
 }
 
 function renderBoard() {
@@ -111,9 +243,8 @@ function renderBoard() {
       button.setAttribute('role', 'gridcell');
       if (isGiven(row, col)) button.classList.add('given');
       const value = state.values[row][col];
-      if (value) {
-        button.textContent = value;
-      } else {
+      if (value) button.textContent = value;
+      else {
         const notes = state.notes.get(key);
         if (notes?.size) button.appendChild(makeNotes(notes));
       }
@@ -152,21 +283,23 @@ function paintSelection() {
     cell.querySelectorAll('.wrap-dot').forEach((dot) => dot.remove());
   });
   if (!state.selected) return;
+
   const { row, col } = state.selected;
   const selectedKey = cellKey(row, col);
   const selectedValue = state.values[row][col];
-  const routeKeys = new Set(routeCellsFor(row, col, 1).map((c) => cellKey(c.row, c.col)));
+  const routeKeys = new Set(routeCellsFor(row, col, 1).map((cell) => cellKey(cell.row, cell.col)));
 
   document.querySelectorAll('.cell').forEach((cell) => {
     const r = Number(cell.dataset.row);
     const c = Number(cell.dataset.col);
     const key = cellKey(r, c);
     if (key === selectedKey) cell.classList.add('selected');
-    else if (system.peers.get(selectedKey)?.has(key)) cell.classList.add('peer');
-    if (key !== selectedKey && routeKeys.has(key)) cell.classList.add('route-peer');
+    else if (r === row || c === col) cell.classList.add('peer');
+    if (state.routesVisible && key !== selectedKey && routeKeys.has(key)) cell.classList.add('route-peer');
     if (selectedValue && state.values[r][c] === selectedValue) cell.classList.add('same-value');
   });
-  addWrapMarkers(row, col);
+
+  if (state.routesVisible) addWrapMarkers(row, col);
 }
 
 function addWrapMarkers(row, col) {
@@ -196,20 +329,19 @@ function cellElement(row, col) {
 function renderNumberPad() {
   const numbers = $('#numbers');
   numbers.innerHTML = '';
-  const selected = state.selected;
   const used = new Set();
-  if (selected) {
-    system.peers.get(cellKey(selected.row, selected.col))?.forEach((key) => {
+  if (state.selected) {
+    system.peers.get(cellKey(state.selected.row, state.selected.col))?.forEach((key) => {
       const [r, c] = key.split(',').map(Number);
       if (state.values[r][c]) used.add(state.values[r][c]);
     });
   }
   SYMBOLS.forEach((n) => {
-    const btn = document.createElement('button');
-    btn.className = `num-btn ${used.has(n) ? 'used' : ''}`;
-    btn.textContent = n;
-    btn.addEventListener('click', () => enterNumber(n));
-    numbers.appendChild(btn);
+    const button = document.createElement('button');
+    button.className = `num-btn ${used.has(n) ? 'used' : ''}`;
+    button.textContent = n;
+    button.addEventListener('click', () => enterNumber(n));
+    numbers.appendChild(button);
   });
 }
 
@@ -218,6 +350,7 @@ function enterNumber(n) {
   const { row, col } = state.selected;
   if (isGiven(row, col)) return;
   const key = cellKey(row, col);
+
   if (state.notesMode) {
     const notes = state.notes.get(key) || new Set();
     notes.has(n) ? notes.delete(n) : notes.add(n);
@@ -226,15 +359,16 @@ function enterNumber(n) {
     const wrong = n !== level().solution[row][col];
     state.values[row][col] = n;
     state.notes.delete(key);
-    if (wrong && $('#errorToggle').checked) {
-      state.mistakes++;
-      requestAnimationFrame(() => cellElement(row, col)?.classList.add('error'));
-    }
+    if (wrong && $('#errorToggle').checked && !state.isTutorial) state.mistakes++;
     removeNoteFromPeers(row, col, n);
   }
+
   saveCurrent();
   renderBoard();
   renderNumberPad();
+  if (!state.notesMode && state.values[row][col] !== level().solution[row][col] && $('#errorToggle').checked) {
+    requestAnimationFrame(() => cellElement(row, col)?.classList.add('error'));
+  }
   if (state.tutorialStep === 2) {
     state.tutorialStep = 3;
     updateTutorial();
@@ -258,37 +392,84 @@ function removeNoteFromPeers(row, col, n) {
 }
 
 function requestHint() {
-  const item = level();
-  const empties = [];
-  for (let row = 0; row < SIZE; row++) for (let col = 0; col < SIZE; col++) {
-    if (!isGiven(row, col) && state.values[row][col] !== item.solution[row][col]) empties.push({ row, col });
+  if (state.isTutorial) return;
+  if (state.saved.availableStars < HINT_COST) {
+    showToast(`Necesitas ${HINT_COST}★ disponible para usar una pista.`);
+    return;
   }
-  if (!empties.length) return;
-  const target = empties[0];
+
+  const item = level();
+  const targets = [];
+  for (let row = 0; row < SIZE; row++) for (let col = 0; col < SIZE; col++) {
+    if (!isGiven(row, col) && state.values[row][col] !== item.solution[row][col]) targets.push({ row, col });
+  }
+  if (!targets.length) return;
+
+  const target = targets[0];
+  state.saved.availableStars -= HINT_COST;
   state.values[target.row][target.col] = item.solution[target.row][target.col];
   state.notes.delete(cellKey(target.row, target.col));
   state.hints++;
   state.selected = target;
   saveCurrent();
+  renderStarSummaries();
   renderBoard();
   requestAnimationFrame(() => cellElement(target.row, target.col)?.classList.add('hinted'));
   renderNumberPad();
   checkVictory();
 }
 
+function starsForRun() {
+  if (state.hints === 0 && state.mistakes <= 1) return 3;
+  if (state.hints <= 1 && state.mistakes <= 3) return 2;
+  return 1;
+}
+
 function checkVictory() {
   const solved = level().solution.every((row, r) => row.every((value, c) => state.values[r][c] === value));
   if (!solved) return;
-  if (state.isTutorial) return;
+
   stopTimer();
-  state.saved.completed[level().id] = true;
+  if (state.isTutorial) {
+    state.tutorialStep = -1;
+    showToast('Tutorial completado. Ya puedes jugar los niveles cuando quieras.');
+    leaveGame();
+    setTab('levels');
+    return;
+  }
+
+  const item = level();
+  const beforeTrophies = new Set(TROPHIES.filter(trophyEarned).map((t) => t.id));
+  const runStars = starsForRun();
+  const previousBest = state.saved.bestStars[item.id] || 0;
+  const newBest = Math.max(previousBest, runStars);
+  const delta = newBest - previousBest;
+  state.saved.bestStars[item.id] = newBest;
+  state.saved.availableStars += delta;
   saveCurrent();
   persist();
+
+  const afterTrophies = TROPHIES.filter(trophyEarned);
+  afterTrophies.forEach((t) => { state.saved.trophies[t.id] = true; });
+  const newTrophy = afterTrophies.find((t) => !beforeTrophies.has(t.id));
+  persist();
+
   const min = Math.floor(state.elapsed / 60);
   const sec = String(state.elapsed % 60).padStart(2, '0');
+  $('#victoryStars').textContent = starString(runStars);
+  $('#victoryTitle').textContent = runStars === 3 ? '¡Recorrido impecable!' : runStars === 2 ? '¡Muy buen recorrido!' : '¡Nivel completado!';
   $('#victoryStats').textContent = `${min}:${sec} · ${state.mistakes} errores · ${state.hints} pistas`;
-  $('#nextLevelBtn').style.display = state.levelIndex < LEVELS.length - 1 ? '' : 'none';
+  const rewardParts = [];
+  if (delta > 0) rewardParts.push(`+${delta}★ nuevas · saldo ${state.saved.availableStars}★`);
+  else rewardParts.push(`Tu mejor marca sigue en ${previousBest}★`);
+  if (newTrophy) rewardParts.push(`${newTrophy.icon} Nuevo trofeo: ${newTrophy.name}`);
+  $('#victoryReward').textContent = rewardParts.join(' · ');
+
+  const next = LEVELS[state.levelIndex + 1];
+  const canContinue = next && isUnlocked(next);
+  $('#nextLevelBtn').style.display = canContinue ? '' : 'none';
   victoryDialog.showModal();
+  renderHub();
 }
 
 function saveCurrent() {
@@ -296,7 +477,11 @@ function saveCurrent() {
   const notes = {};
   state.notes.forEach((set, key) => { if (set.size) notes[key] = [...set]; });
   state.saved.levels[level().id] = {
-    values: cloneGrid(state.values), notes, mistakes: state.mistakes, hints: state.hints, elapsed: state.elapsed,
+    values: cloneGrid(state.values),
+    notes,
+    mistakes: state.mistakes,
+    hints: state.hints,
+    elapsed: state.elapsed,
   };
   persist();
 }
@@ -325,10 +510,10 @@ function updateTimer() {
 }
 
 const tutorialSteps = [
-  ['1 · Toca una casilla', 'Selecciona una casilla vacía. El tablero te mostrará todo lo que se relaciona con ella.'],
-  ['2 · Tres restricciones', 'La fila y la columna se suavizan. La ruta aparece en dorado: sus siete casillas tampoco pueden repetir números.'],
-  ['3 · Juega un número', 'Elige abajo el número correcto. El selector permanece fijo para que sea cómodo en celular.'],
-  ['4 · El borde continúa', 'Observa los pequeños puntos dorados: indican dónde la ruta salta de un borde al opuesto. Ya conoces todas las reglas.'],
+  ['1 · Toca una casilla', 'Selecciona una casilla vacía. Verás las restricciones que pasan por ella.'],
+  ['2 · Fila, columna y ruta', 'La fila y la columna se suavizan. La ruta aparece en dorado y tampoco puede repetir números.'],
+  ['3 · Juega un número', 'Elige abajo el número correcto. También puedes activar Notas para guardar candidatos.'],
+  ['4 · El borde continúa', 'Los puntos dorados muestran dónde una ruta sale por un borde y reaparece por el opuesto.'],
 ];
 
 function updateTutorial() {
@@ -338,9 +523,9 @@ function updateTutorial() {
   }
   tutorialCallout.classList.remove('hidden');
   const [title, text] = tutorialSteps[Math.min(state.tutorialStep, tutorialSteps.length - 1)];
-  tutorialTitle.textContent = title;
-  tutorialText.textContent = text;
-  tutorialNextBtn.textContent = state.tutorialStep >= tutorialSteps.length - 1 ? 'Listo' : 'Siguiente';
+  $('#tutorialTitle').textContent = title;
+  $('#tutorialText').textContent = text;
+  $('#tutorialNextBtn').textContent = state.tutorialStep >= tutorialSteps.length - 1 ? 'Listo' : 'Siguiente';
 }
 
 function nextTutorialStep() {
@@ -366,31 +551,54 @@ function findFirstEditable() {
   return null;
 }
 
+let toastTimer = null;
+function showToast(message) {
+  const toast = $('#toast');
+  toast.textContent = message;
+  toast.classList.remove('hidden');
+  window.clearTimeout(toastTimer);
+  toastTimer = window.setTimeout(() => toast.classList.add('hidden'), 2600);
+}
+
+document.querySelectorAll('.nav-btn').forEach((button) => {
+  button.addEventListener('click', () => setTab(button.dataset.tab));
+});
+
 $('#tutorialBtn').addEventListener('click', () => startLevel(0, true));
 $('#backBtn').addEventListener('click', leaveGame);
-$('#rulesBtn').addEventListener('click', () => rulesDialog.showModal());
 $('#notesBtn').addEventListener('click', () => {
   state.notesMode = !state.notesMode;
   $('#notesBtn').classList.toggle('active', state.notesMode);
   $('#notesBtn').setAttribute('aria-pressed', String(state.notesMode));
 });
+$('#routesBtn').addEventListener('click', () => {
+  if (state.isTutorial) return;
+  state.routesVisible = !state.routesVisible;
+  $('#routesBtn').classList.toggle('active', state.routesVisible);
+  $('#routesBtn').setAttribute('aria-pressed', String(state.routesVisible));
+  $('#routesBtn').innerHTML = state.routesVisible ? 'Rutas <span>●</span>' : 'Rutas <span>○</span>';
+  paintSelection();
+});
 $('#eraseBtn').addEventListener('click', eraseSelected);
 $('#hintBtn').addEventListener('click', requestHint);
 $('#tutorialNextBtn').addEventListener('click', nextTutorialStep);
-$('#levelsBtn').addEventListener('click', () => { victoryDialog.close(); leaveGame(); });
+$('#levelsBtn').addEventListener('click', () => {
+  victoryDialog.close();
+  leaveGame();
+  setTab('levels');
+});
 $('#nextLevelBtn').addEventListener('click', () => {
   victoryDialog.close();
-  startLevel(Math.min(state.levelIndex + 1, LEVELS.length - 1), false);
+  startLevel(state.levelIndex + 1, false);
 });
 $('#resetProgressBtn').addEventListener('click', () => {
-  if (!confirm('¿Borrar el progreso guardado de Sudoproyective?')) return;
-  state.saved = { levels: {}, completed: {} };
+  if (!confirm('¿Borrar niveles, estrellas, pistas gastadas y trofeos de Sudoproyective?')) return;
+  state.saved = freshSave();
   persist();
-  renderLevels();
+  renderHub();
+  showToast('Progreso reiniciado.');
 });
-document.querySelectorAll('[data-close]').forEach((button) => {
-  button.addEventListener('click', () => document.getElementById(button.dataset.close).close());
-});
-window.addEventListener('beforeunload', saveCurrent);
 
-renderLevels();
+window.addEventListener('beforeunload', saveCurrent);
+renderHub();
+setTab('levels');
