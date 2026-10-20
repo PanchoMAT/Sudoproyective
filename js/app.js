@@ -8,6 +8,7 @@ const gameScreen = $('#gameScreen');
 const mainNav = $('#mainNav');
 const difficultySections = $('#difficultySections');
 const victoryDialog = $('#victoryDialog');
+const invalidDialog = $('#invalidDialog');
 const tutorialCallout = $('#tutorialCallout');
 const system = makeConstraintSystem([1]);
 
@@ -27,7 +28,6 @@ const state = {
   selected: null,
   notesMode: false,
   routesVisible: true,
-  mistakes: 0,
   hints: 0,
   elapsed: 0,
   timerId: null,
@@ -35,6 +35,8 @@ const state = {
   tutorialStep: -1,
   isTutorial: false,
   activeTab: 'levels',
+  undoStack: [],
+  redoStack: [],
   saved: loadSaved(),
 };
 
@@ -67,6 +69,11 @@ function cloneGrid(grid) { return grid.map((row) => [...row]); }
 function level() { return LEVELS[state.levelIndex]; }
 function isGiven(row, col) { return level().puzzle[row][col] !== 0; }
 function isUnlocked(item) { return totalStars() >= item.unlockStars; }
+function firstLevelHelp() {
+  if (state.isTutorial) return true;
+  const item = level();
+  return item.number === 1 && !state.saved.bestStars[item.id];
+}
 
 function setTab(tab) {
   state.activeTab = tab;
@@ -193,13 +200,14 @@ function startLevel(index, tutorial = false) {
   state.notes = tutorial ? new Map() : new Map(
     Object.entries(savedLevel?.notes || {}).map(([key, value]) => [key, new Set(value)])
   );
-  state.mistakes = tutorial ? 0 : (savedLevel?.mistakes || 0);
   state.hints = tutorial ? 0 : (savedLevel?.hints || 0);
   state.elapsed = tutorial ? 0 : (savedLevel?.elapsed || 0);
   state.selected = null;
   state.notesMode = false;
   state.routesVisible = true;
   state.tutorialStep = tutorial ? 0 : -1;
+  state.undoStack = [];
+  state.redoStack = [];
 
   $('#notesBtn').classList.remove('active');
   $('#notesBtn').setAttribute('aria-pressed', 'false');
@@ -217,6 +225,7 @@ function startLevel(index, tutorial = false) {
   renderBoard();
   renderNumberPad();
   renderStarSummaries();
+  updateHistoryButtons();
   updateTutorial();
   startTimer();
 }
@@ -224,6 +233,7 @@ function startLevel(index, tutorial = false) {
 function leaveGame() {
   saveCurrent();
   stopTimer();
+  if (invalidDialog?.open) invalidDialog.close();
   gameScreen.classList.remove('active');
   hubScreen.classList.add('active');
   mainNav.classList.remove('hidden');
@@ -279,7 +289,7 @@ function selectCell(row, col) {
 
 function paintSelection() {
   document.querySelectorAll('.cell').forEach((cell) => {
-    cell.classList.remove('selected', 'peer', 'route-peer', 'same-value');
+    cell.classList.remove('selected', 'peer', 'route-peer', 'same-value', 'error');
     cell.querySelectorAll('.wrap-dot').forEach((dot) => dot.remove());
   });
   if (!state.selected) return;
@@ -296,7 +306,7 @@ function paintSelection() {
     if (key === selectedKey) cell.classList.add('selected');
     else if (r === row || c === col) cell.classList.add('peer');
     if (state.routesVisible && key !== selectedKey && routeKeys.has(key)) cell.classList.add('route-peer');
-    if (selectedValue && state.values[r][c] === selectedValue) cell.classList.add('same-value');
+    if (firstLevelHelp() && selectedValue && state.values[r][c] === selectedValue) cell.classList.add('same-value');
   });
 
   if (state.routesVisible) addWrapMarkers(row, col);
@@ -330,12 +340,14 @@ function renderNumberPad() {
   const numbers = $('#numbers');
   numbers.innerHTML = '';
   const used = new Set();
-  if (state.selected) {
+
+  if (firstLevelHelp() && state.selected) {
     system.peers.get(cellKey(state.selected.row, state.selected.col))?.forEach((key) => {
       const [r, c] = key.split(',').map(Number);
       if (state.values[r][c]) used.add(state.values[r][c]);
     });
   }
+
   SYMBOLS.forEach((n) => {
     const button = document.createElement('button');
     button.className = `num-btn ${used.has(n) ? 'used' : ''}`;
@@ -345,46 +357,100 @@ function renderNumberPad() {
   });
 }
 
+function notesObject() {
+  const result = {};
+  state.notes.forEach((set, key) => {
+    if (set.size) result[key] = [...set];
+  });
+  return result;
+}
+
+function captureSnapshot() {
+  return {
+    values: cloneGrid(state.values),
+    notes: notesObject(),
+    selected: state.selected ? { ...state.selected } : null,
+  };
+}
+
+function restoreSnapshot(snapshot) {
+  state.values = cloneGrid(snapshot.values);
+  state.notes = new Map(Object.entries(snapshot.notes || {}).map(([key, value]) => [key, new Set(value)]));
+  state.selected = snapshot.selected ? { ...snapshot.selected } : null;
+  saveCurrent();
+  renderBoard();
+  renderNumberPad();
+  updateHistoryButtons();
+}
+
+function recordUserMove() {
+  state.undoStack.push(captureSnapshot());
+  if (state.undoStack.length > 200) state.undoStack.shift();
+  state.redoStack = [];
+}
+
+function undoMove() {
+  if (!state.undoStack.length) return;
+  const previous = state.undoStack.pop();
+  state.redoStack.push(captureSnapshot());
+  restoreSnapshot(previous);
+}
+
+function redoMove() {
+  if (!state.redoStack.length) return;
+  const next = state.redoStack.pop();
+  state.undoStack.push(captureSnapshot());
+  restoreSnapshot(next);
+  checkCompletion();
+}
+
+function updateHistoryButtons() {
+  $('#undoBtn').disabled = state.undoStack.length === 0;
+  $('#redoBtn').disabled = state.redoStack.length === 0;
+}
+
 function enterNumber(n) {
   if (!state.selected) return;
   const { row, col } = state.selected;
   if (isGiven(row, col)) return;
   const key = cellKey(row, col);
 
+  recordUserMove();
   if (state.notesMode) {
     const notes = state.notes.get(key) || new Set();
     notes.has(n) ? notes.delete(n) : notes.add(n);
     state.notes.set(key, notes);
   } else {
-    const wrong = n !== level().solution[row][col];
     state.values[row][col] = n;
     state.notes.delete(key);
-    if (wrong && $('#errorToggle').checked && !state.isTutorial) state.mistakes++;
-    removeNoteFromPeers(row, col, n);
+    if (firstLevelHelp()) removeNoteFromPeers(row, col, n);
   }
 
   saveCurrent();
   renderBoard();
   renderNumberPad();
-  if (!state.notesMode && state.values[row][col] !== level().solution[row][col] && $('#errorToggle').checked) {
-    requestAnimationFrame(() => cellElement(row, col)?.classList.add('error'));
-  }
+  updateHistoryButtons();
   if (state.tutorialStep === 2) {
     state.tutorialStep = 3;
     updateTutorial();
   }
-  checkVictory();
+  if (!state.notesMode) checkCompletion();
 }
 
 function eraseSelected() {
   if (!state.selected) return;
   const { row, col } = state.selected;
   if (isGiven(row, col)) return;
+  const key = cellKey(row, col);
+  if (!state.values[row][col] && !state.notes.get(key)?.size) return;
+
+  recordUserMove();
   state.values[row][col] = 0;
-  state.notes.delete(cellKey(row, col));
+  state.notes.delete(key);
   saveCurrent();
   renderBoard();
   renderNumberPad();
+  updateHistoryButtons();
 }
 
 function removeNoteFromPeers(row, col, n) {
@@ -411,24 +477,45 @@ function requestHint() {
   state.notes.delete(cellKey(target.row, target.col));
   state.hints++;
   state.selected = target;
+  state.undoStack = [];
+  state.redoStack = [];
   saveCurrent();
   renderStarSummaries();
   renderBoard();
   requestAnimationFrame(() => cellElement(target.row, target.col)?.classList.add('hinted'));
   renderNumberPad();
-  checkVictory();
+  updateHistoryButtons();
+  checkCompletion();
 }
 
 function starsForRun() {
-  if (state.hints === 0 && state.mistakes <= 1) return 3;
-  if (state.hints <= 1 && state.mistakes <= 3) return 2;
+  if (state.hints === 0) return 3;
+  if (state.hints === 1) return 2;
   return 1;
 }
 
-function checkVictory() {
-  const solved = level().solution.every((row, r) => row.every((value, c) => state.values[r][c] === value));
-  if (!solved) return;
+function boardComplete() {
+  return state.values.every((row) => row.every((value) => SYMBOLS.includes(value)));
+}
 
+function boardValid() {
+  if (!boardComplete()) return false;
+  return system.units.every((unit) => {
+    const values = unit.cells.map(({ row, col }) => state.values[row][col]);
+    return new Set(values).size === SIZE && values.every((value) => SYMBOLS.includes(value));
+  });
+}
+
+function checkCompletion() {
+  if (!boardComplete()) return;
+  if (!boardValid()) {
+    if (!state.isTutorial && !invalidDialog.open) invalidDialog.showModal();
+    return;
+  }
+  completeLevel();
+}
+
+function completeLevel() {
   stopTimer();
   if (state.isTutorial) {
     state.tutorialStep = -1;
@@ -458,7 +545,7 @@ function checkVictory() {
   const sec = String(state.elapsed % 60).padStart(2, '0');
   $('#victoryStars').textContent = starString(runStars);
   $('#victoryTitle').textContent = runStars === 3 ? '¡Recorrido impecable!' : runStars === 2 ? '¡Muy buen recorrido!' : '¡Nivel completado!';
-  $('#victoryStats').textContent = `${min}:${sec} · ${state.mistakes} errores · ${state.hints} pistas`;
+  $('#victoryStats').textContent = `${min}:${sec} · ${state.hints} pistas`;
   const rewardParts = [];
   if (delta > 0) rewardParts.push(`+${delta}★ nuevas · saldo ${state.saved.availableStars}★`);
   else rewardParts.push(`Tu mejor marca sigue en ${previousBest}★`);
@@ -474,12 +561,9 @@ function checkVictory() {
 
 function saveCurrent() {
   if (!state.values.length || state.isTutorial) return;
-  const notes = {};
-  state.notes.forEach((set, key) => { if (set.size) notes[key] = [...set]; });
   state.saved.levels[level().id] = {
     values: cloneGrid(state.values),
-    notes,
-    mistakes: state.mistakes,
+    notes: notesObject(),
     hints: state.hints,
     elapsed: state.elapsed,
   };
@@ -512,7 +596,7 @@ function updateTimer() {
 const tutorialSteps = [
   ['1 · Toca una casilla', 'Selecciona una casilla vacía. Verás las restricciones que pasan por ella.'],
   ['2 · Fila, columna y ruta', 'La fila y la columna se suavizan. La ruta aparece en dorado y tampoco puede repetir números.'],
-  ['3 · Juega un número', 'Elige abajo el número correcto. También puedes activar Notas para guardar candidatos.'],
+  ['3 · Juega un número', 'En el tutorial y en tu primera partida del nivel 1, el selector te ayuda a reconocer números ya usados. Después esa ayuda desaparece.'],
   ['4 · El borde continúa', 'Los puntos dorados muestran dónde una ruta sale por un borde y reaparece por el opuesto.'],
 ];
 
@@ -581,6 +665,8 @@ $('#routesBtn').addEventListener('click', () => {
 });
 $('#eraseBtn').addEventListener('click', eraseSelected);
 $('#hintBtn').addEventListener('click', requestHint);
+$('#undoBtn').addEventListener('click', undoMove);
+$('#redoBtn').addEventListener('click', redoMove);
 $('#tutorialNextBtn').addEventListener('click', nextTutorialStep);
 $('#levelsBtn').addEventListener('click', () => {
   victoryDialog.close();
