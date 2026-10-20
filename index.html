@@ -15,9 +15,12 @@
         <p class="eyebrow">Prototipo v0.2</p>
         <h1>Sudoproyective</h1>
       </div>
-      <div class="star-summary" aria-label="Resumen de estrellas">
-        <span title="Estrellas totales">★ <strong id="totalStarsTop">0</strong></span>
-        <span class="spendable" title="Estrellas disponibles">✦ <strong id="availableStarsTop">0</strong></span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="star-summary" aria-label="Resumen de estrellas">
+          <span title="Estrellas totales">★ <strong id="totalStarsTop">0</strong></span>
+          <span class="spendable" title="Estrellas disponibles">✦ <strong id="availableStarsTop">0</strong></span>
+        </div>
+        <button class="icon-btn" type="button" aria-label="Ver instrucciones rápidas" title="Instrucciones" onclick="document.getElementById('quickRulesDialog').showModal()">?</button>
       </div>
     </header>
 
@@ -142,6 +145,23 @@
   </main>
 
   <div id="toast" class="toast hidden" role="status"></div>
+
+  <dialog id="quickRulesDialog" class="modal">
+    <form method="dialog">
+      <button class="modal-close" aria-label="Cerrar instrucciones">×</button>
+    </form>
+    <p class="eyebrow">Instrucciones rápidas</p>
+    <h2>Fila · columna · ruta</h2>
+    <div class="rules-cards">
+      <article><span>1</span><div><strong>Completa con 1–7</strong><p>Llena todas las casillas vacías.</p></div></article>
+      <article><span>2</span><div><strong>Sin repetir</strong><p>No repitas números en ninguna fila ni columna.</p></div></article>
+      <article><span>3</span><div><strong>Mira la ruta</strong><p>Las siete casillas de la ruta tampoco pueden repetir números.</p></div></article>
+    </div>
+    <div class="route-demo" aria-label="La ruta continúa por el borde opuesto">
+      <span>↘</span><span>↘</span><span>↘</span><span>↘</span><span class="jump">⤴</span><span>↘</span><span>↘</span>
+    </div>
+    <p style="color:var(--muted);line-height:1.5;margin-bottom:0;">Una ruta puede salir por un borde y continuar por el lado opuesto. Al seleccionar una casilla puedes mostrar su ruta en dorado.</p>
+  </dialog>
 
   <dialog id="victoryDialog" class="modal victory-modal">
     <div class="victory-mark">✓</div>
