@@ -74,8 +74,12 @@
           <p>Durante los niveles normales puedes ocultar o mostrar la ruta seleccionada. La regla sigue existiendo aunque la ocultes.</p>
         </div>
         <div class="info-card">
+          <strong>Sin corrección inmediata</strong>
+          <p>Desde el nivel 2, el juego no descarta números ni te dice si una jugada es correcta. Cuando llenes todo el tablero sólo te indicará si la solución completa es válida o no.</p>
+        </div>
+        <div class="info-card">
           <strong>Estrellas y pistas</strong>
-          <p>Completar un nivel entrega entre 1 y 3 estrellas. Tu total histórico desbloquea niveles; tu saldo disponible puede gastarse en pistas.</p>
+          <p>Completar un nivel entrega 3★ sin pistas, 2★ usando una pista y 1★ usando dos o más. Tu total histórico desbloquea niveles; tu saldo disponible puede gastarse en pistas.</p>
         </div>
       </div>
 
@@ -123,10 +127,10 @@
         <button id="hintBtn" class="mode-btn">Pista · 1★</button>
       </div>
       <div class="status-row secondary-tools">
-        <label class="switch-label">
-          <input id="errorToggle" type="checkbox" checked />
-          <span>Marcar errores</span>
-        </label>
+        <div class="history-tools" aria-label="Historial de movimientos">
+          <button id="undoBtn" class="mode-btn history-btn" disabled aria-label="Deshacer movimiento">↶ <span>Deshacer</span></button>
+          <button id="redoBtn" class="mode-btn history-btn" disabled aria-label="Rehacer movimiento">↷ <span>Rehacer</span></button>
+        </div>
         <span id="gameStarsBalance" class="mini-balance">Disponibles: 0★</span>
       </div>
 
@@ -161,6 +165,16 @@
       <span>↘</span><span>↘</span><span>↘</span><span>↘</span><span class="jump">⤴</span><span>↘</span><span>↘</span>
     </div>
     <p style="color:var(--muted);line-height:1.5;margin-bottom:0;">Una ruta puede salir por un borde y continuar por el lado opuesto. Al seleccionar una casilla puedes mostrar su ruta en dorado.</p>
+  </dialog>
+
+  <dialog id="invalidDialog" class="modal victory-modal">
+    <div class="invalid-mark">×</div>
+    <p class="eyebrow">Tablero completo</p>
+    <h2>La solución todavía no es válida</h2>
+    <p>No te diremos dónde está el problema. Revisa filas, columnas y rutas y modifica las casillas que consideres necesarias.</p>
+    <form method="dialog">
+      <button class="primary-btn" style="width:100%;margin-top:8px;">Seguir revisando</button>
+    </form>
   </dialog>
 
   <dialog id="victoryDialog" class="modal victory-modal">
