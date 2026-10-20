@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
-import { LEVELS, DIFFICULTIES } from '../js/puzzles.js';
+import { LEVELS, WORLDS } from '../js/puzzles.js';
 import { makeConstraintSystem, SIZE } from '../js/geometry.js';
 
-const system = makeConstraintSystem([1]);
 const symbols = [1,2,3,4,5,6,7];
 
-function countSolutions(grid, limit = 2) {
+function countSolutions(grid, slopes, limit = 2) {
+  const system = makeConstraintSystem(slopes);
   const values = grid.map((row) => [...row]);
   let count = 0;
 
@@ -29,7 +29,6 @@ function countSolutions(grid, limit = 2) {
       if (!bestCandidates || cands.length < bestCandidates.length) {
         best = { row, col };
         bestCandidates = cands;
-        if (cands.length === 1) break;
       }
     }
     if (!best) {
@@ -48,11 +47,14 @@ function countSolutions(grid, limit = 2) {
   return count;
 }
 
-assert.equal(LEVELS.length, 18, 'La v0.2 debe contener 18 niveles');
-assert.deepEqual([...new Set(LEVELS.map((l) => l.difficulty))], DIFFICULTIES);
+assert.equal(LEVELS.length, 24, 'La v0.3 debe contener 24 niveles');
+assert.equal(WORLDS.length, 2, 'La v0.3 debe contener dos mundos');
+assert.equal(LEVELS.filter((l) => l.slope === 1).length, 18);
+assert.equal(LEVELS.filter((l) => l.slope === 2).length, 6);
 
 let previousUnlock = -1;
 for (const level of LEVELS) {
+  const system = makeConstraintSystem(level.slopes);
   assert.equal(level.puzzle.length, 7);
   assert.equal(level.solution.length, 7);
   assert.ok(level.unlockStars >= previousUnlock, 'Los umbrales de desbloqueo deben ser crecientes');
@@ -70,7 +72,7 @@ for (const level of LEVELS) {
     if (level.puzzle[r][c]) assert.equal(level.puzzle[r][c], level.solution[r][c]);
   }
 
-  assert.equal(countSolutions(level.puzzle), 1, `${level.id}: debe tener solución única`);
+  assert.equal(countSolutions(level.puzzle, level.slopes), 1, `${level.id}: debe tener solución única`);
 }
 
 console.log('puzzles.test.mjs: OK');
