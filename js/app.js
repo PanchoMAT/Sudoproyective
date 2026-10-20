@@ -27,6 +27,7 @@ const state = {
   timerId: null,
   startedAt: null,
   tutorialStep: -1,
+  isTutorial: false,
   saved: loadSaved(),
 };
 
@@ -64,13 +65,16 @@ function renderLevels() {
 
 function startLevel(index, tutorial = false) {
   state.levelIndex = index;
+  state.isTutorial = tutorial;
   const item = LEVELS[index];
-  const savedLevel = state.saved.levels[item.id];
+  const savedLevel = tutorial ? null : state.saved.levels[item.id];
   state.values = savedLevel?.values ? cloneGrid(savedLevel.values) : cloneGrid(item.puzzle);
-  state.notes = new Map(Object.entries(savedLevel?.notes || {}).map(([key, value]) => [key, new Set(value)]));
-  state.mistakes = savedLevel?.mistakes || 0;
-  state.hints = savedLevel?.hints || 0;
-  state.elapsed = savedLevel?.elapsed || 0;
+  state.notes = tutorial
+    ? new Map()
+    : new Map(Object.entries(savedLevel?.notes || {}).map(([key, value]) => [key, new Set(value)]));
+  state.mistakes = tutorial ? 0 : (savedLevel?.mistakes || 0);
+  state.hints = tutorial ? 0 : (savedLevel?.hints || 0);
+  state.elapsed = tutorial ? 0 : (savedLevel?.elapsed || 0);
   state.selected = null;
   state.notesMode = false;
   state.tutorialStep = tutorial ? 0 : -1;
@@ -275,6 +279,7 @@ function requestHint() {
 function checkVictory() {
   const solved = level().solution.every((row, r) => row.every((value, c) => state.values[r][c] === value));
   if (!solved) return;
+  if (state.isTutorial) return;
   stopTimer();
   state.saved.completed[level().id] = true;
   saveCurrent();
@@ -287,7 +292,7 @@ function checkVictory() {
 }
 
 function saveCurrent() {
-  if (!state.values.length) return;
+  if (!state.values.length || state.isTutorial) return;
   const notes = {};
   state.notes.forEach((set, key) => { if (set.size) notes[key] = [...set]; });
   state.saved.levels[level().id] = {
