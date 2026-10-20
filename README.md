@@ -1,53 +1,79 @@
-# Sudoproyective — prototipo v0.1
+# Sudoproyective
 
-Puzzle matemático independiente inspirado en la geometría afín finita.
+Prototipo de puzzle matemático independiente inspirado en geometría afín finita.
 
-## Mecánica visible
+## v0.2
 
-- Tablero de 7×7.
-- Símbolos 1–7.
-- No repetir en una fila.
-- No repetir en una columna.
-- No repetir en una ruta.
-- Las rutas continúan por el borde opuesto del tablero.
+La versión actual usa un tablero `7 × 7` con símbolos `1,…,7` y tres tipos de unidades `AllDifferent`:
 
-## Estructura matemática
+- 7 filas;
+- 7 columnas;
+- 7 rutas de la familia `y = x + b (mod 7)`.
 
-Las 49 celdas se identifican con `AG(2,7) = F_7^2`. La primera versión usa tres direcciones:
+La interfaz no exige conocimientos matemáticos: la regla jugable es simplemente **fila, columna y ruta: sin repetir**.
 
-- filas;
-- columnas;
-- rutas `y = x + b (mod 7)`, para `b = 0,…,6`.
+### Progresión
 
-Cada grupo de siete celdas es una restricción `AllDifferent`. Hay 21 unidades en total y cada celda pertenece a exactamente tres de ellas. El motor está preparado para añadir nuevas familias de pendientes en versiones posteriores.
+La v0.2 contiene 18 niveles separados en tres grupos:
 
-## Ejecutar
+1. **Iniciación** — alta densidad de pistas y deducciones directas.
+2. **Intermedio** — menos pistas y mayor necesidad de cruzar información entre unidades.
+3. **Avanzado** — puzzles más vacíos con más deducciones de posición única dentro de una unidad.
 
-No hay proceso de compilación ni dependencias. Basta servir la carpeta por HTTP, por ejemplo:
+Todos los niveles incluidos tienen solución única.
 
-```bash
-python -m http.server 8000
-```
+### Estrellas, pistas y desbloqueos
 
-y abrir `http://localhost:8000`.
+Cada nivel entrega de 1 a 3 estrellas según la calidad de la resolución:
 
-También puede publicarse directamente con GitHub Pages desde la rama principal.
+- 3 estrellas: sin pistas y como máximo 1 error;
+- 2 estrellas: como máximo 1 pista y 3 errores;
+- 1 estrella: nivel completado.
 
-## Incluido en v0.1
+Se mantienen dos cantidades distintas:
 
-- interfaz adaptable a celular;
-- selector fijo de números;
+- **estrellas totales:** suma de las mejores marcas históricas; nunca disminuye y sirve para desbloquear niveles;
+- **estrellas disponibles:** saldo que puede gastarse en pistas. Cada pista cuesta 1 estrella disponible.
+
+Repetir un nivel sólo entrega la diferencia si se mejora la mejor marca, evitando obtener estrellas infinitas del mismo puzzle.
+
+### Trofeos provisionales
+
+- Brújula de Bronce — completar nivel 6.
+- Cartógrafo de Plata — completar nivel 12.
+- Geómetra de Oro — completar nivel 18.
+- Horizonte Perfecto — conseguir las 54 estrellas.
+
+### Interfaz
+
+- navegación por pestañas: Niveles, Tutorial, Reglas y Trofeos;
+- tutorial opcional y separado del progreso;
+- rutas visibles/ocultas a voluntad en niveles normales;
 - notas/candidatos;
-- detección opcional de errores;
-- resaltado de fila, columna y ruta;
-- indicación visual de salto por los bordes;
-- tutorial interactivo básico;
-- seis niveles introductorios con solución única;
-- pistas;
-- guardado automático con `localStorage`;
-- marca de niveles completados;
+- errores opcionales;
+- selector numérico fijo para celular;
+- guardado local automático;
 - cronómetro y pantalla de victoria.
 
-## Filosofía
+## Matemática
 
-La geometría avanzada es parte de la estructura del juego, no un requisito para jugarlo. La interfaz debe seguir siendo comprensible sin conocer cuerpos finitos, planos afines o geometría proyectiva.
+Internamente el tablero se identifica con `AG(2,7) = F_7²`. En coordenadas de pantalla `(row, col)`, las rutas de la primera versión cumplen
+
+`row = col + b (mod 7)`.
+
+El motor está diseñado para admitir más familias `row = m·col + b (mod 7)` en versiones futuras sin cambiar la arquitectura básica.
+
+## Pruebas
+
+```bash
+npm test
+```
+
+Las pruebas verifican:
+
+- 21 unidades en la configuración actual;
+- 3 unidades por celda;
+- 18 pares incompatibles por celda;
+- validez de todas las soluciones;
+- unicidad de los 18 puzzles;
+- coherencia de los umbrales de desbloqueo.
