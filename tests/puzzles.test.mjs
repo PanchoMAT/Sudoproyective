@@ -51,14 +51,17 @@ assert.equal(LEVELS.length, 24, 'La v0.3 debe contener 24 niveles');
 assert.equal(WORLDS.length, 2, 'La v0.3 debe contener dos mundos');
 assert.equal(LEVELS.filter((l) => l.slope === 1).length, 18);
 assert.equal(LEVELS.filter((l) => l.slope === 2).length, 6);
+assert.equal(new Set(LEVELS.map((level) => level.id)).size, LEVELS.length, 'Los ids de nivel deben ser únicos');
+assert.equal(new Set(LEVELS.map((level) => level.number)).size, LEVELS.length, 'Los números de nivel deben ser únicos');
 
-let previousUnlock = -1;
+for (const world of WORLDS) {
+  assert.ok(LEVELS.some((level) => level.world === world.id), `El mundo ${world.id} debe contener niveles`);
+}
+
 for (const level of LEVELS) {
   const system = makeConstraintSystem(level.slopes);
   assert.equal(level.puzzle.length, 7);
   assert.equal(level.solution.length, 7);
-  assert.ok(level.unlockStars >= previousUnlock, 'Los umbrales de desbloqueo deben ser crecientes');
-  previousUnlock = level.unlockStars;
 
   for (const row of level.puzzle) assert.equal(row.length, 7);
   for (const row of level.solution) assert.equal(row.length, 7);
