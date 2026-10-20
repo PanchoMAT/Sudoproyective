@@ -1,5 +1,5 @@
 import { SIZE, SYMBOLS, cellKey, makeConstraintSystem, routeCellsFor } from './geometry.js';
-import { LEVELS, DIFFICULTIES } from './puzzles.js';
+import { LEVELS, WORLDS } from './puzzles.js';
 
 const $ = (selector) => document.querySelector(selector);
 const boardEl = $('#board');
@@ -10,15 +10,18 @@ const difficultySections = $('#difficultySections');
 const victoryDialog = $('#victoryDialog');
 const invalidDialog = $('#invalidDialog');
 const tutorialCallout = $('#tutorialCallout');
-const system = makeConstraintSystem([1]);
+const directionCallout = $('#directionCallout');
+const systemCache = new Map();
 
+// Conservamos la clave v0.2 para no perder el progreso ya guardado.
 const STORAGE_KEY = 'sudoproyective-v02';
 const HINT_COST = 1;
 const TROPHIES = [
   { id: 'bronze', icon: '🥉', name: 'Brújula de Bronce', text: 'Completa el nivel 6.', level: 6 },
   { id: 'silver', icon: '🥈', name: 'Cartógrafo de Plata', text: 'Completa el nivel 12.', level: 12 },
   { id: 'gold', icon: '🥇', name: 'Geómetra de Oro', text: 'Completa el nivel 18.', level: 18 },
-  { id: 'master', icon: '🏆', name: 'Horizonte Perfecto', text: 'Consigue las 54 estrellas.', stars: 54 },
+  { id: 'second-direction', icon: '🧭', name: 'Navegante de Dos Rutas', text: 'Completa el nivel 24.', level: 24 },
+  { id: 'master', icon: '🏆', name: 'Horizonte Perfecto', text: 'Consigue las 72 estrellas.', stars: 72 },
 ];
 
 const state = {
@@ -41,13 +44,20 @@ const state = {
 };
 
 function freshSave() {
-  return { levels: {}, bestStars: {}, availableStars: 0, trophies: {} };
+  return { levels: {}, bestStars: {}, availableStars: 0, trophies: {}, seenDirections: {} };
 }
 
 function loadSaved() {
   try {
-    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    return { ...freshSave(), ...(raw || {}) };
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    return {
+      ...freshSave(),
+      ...raw,
+      levels: { ...(raw.levels || {}) },
+      bestStars: { ...(raw.bestStars || {}) },
+      trophies: { ...(raw.trophies || {}) },
+      seenDirections: { ...(raw.seenDirections || {}) },
+    };
   } catch {
     return freshSave();
   }
@@ -69,6 +79,15 @@ function cloneGrid(grid) { return grid.map((row) => [...row]); }
 function level() { return LEVELS[state.levelIndex]; }
 function isGiven(row, col) { return level().puzzle[row][col] !== 0; }
 function isUnlocked(item) { return totalStars() >= item.unlockStars; }
+function slopesFor(item = level()) { return item.slopes?.length ? item.slopes : [item.slope || 1]; }
+function activeSlope(item = level()) { return slopesFor(item)[0]; }
+function constraintSystem(item = level()) {
+  const slopes = slopesFor(item);
+  const key = slopes.join(',');
+  if (!systemCache.has(key)) systemCache.set(key, makeConstraintSystem(slopes));
+  return systemCache.get(key);
+}
+function worldFor(item = level()) { return WORLDS.find((world) => world.id === item.world) || WORLDS[0]; }
 function firstLevelHelp() {
   if (state.isTutorial) return true;
   const item = level();
@@ -118,26 +137,64 @@ function renderUnlockProgress() {
   $('#unlockProgress').style.width = `${Math.round(progress * 100)}%`;
 }
 
+function groupTitle(difficulty) {
+  const labels = {
+    'Iniciación': 'Aprender la estructura',
+    'Intermedio': 'Cruzar información',
+    'Avanzado': 'Leer la geometría',
+    'Exploración': 'Descubrir el salto',
+    'Dominio': 'Leer la nueva dirección',
+    'Desafío': 'Resolver con menos señales',
+  };
+  return labels[difficulty] || difficulty;
+}
+
 function renderLevels() {
   difficultySections.innerHTML = '';
-  for (const difficulty of DIFFICULTIES) {
-    const group = LEVELS.filter((item) => item.difficulty === difficulty);
-    const section = document.createElement('section');
-    section.className = 'difficulty-section';
-    const earned = group.reduce((sum, item) => sum + (state.saved.bestStars[item.id] || 0), 0);
-    section.innerHTML = `
-      <div class="section-heading difficulty-heading">
-        <div>
-          <p class="eyebrow">${difficulty}</p>
-          <h2>${difficulty === 'Iniciación' ? 'Aprender la estructura' : difficulty === 'Intermedio' ? 'Cruzar información' : 'Leer la geometría'}</h2>
+
+  for (const world of WORLDS) {
+    const worldLevels = LEVELS.filter((item) => item.world === world.id);
+    if (!worldLevels.length) continue;
+
+    const worldSection = document.createElement('section');
+    worldSection.className = 'world-section';
+    const earned = worldLevels.reduce((sum, item) => sum + (state.saved.bestStars[item.id] || 0), 0);
+    worldSection.innerHTML = `
+      <div class="info-card world-card">
+        <div class="section-heading difficulty-heading">
+          <div>
+            <p class="eyebrow">${world.kicker}</p>
+            <h2>${world.name}</h2>
+          </div>
+          <span class="group-stars">${earned}/${worldLevels.length * 3}★</span>
         </div>
-        <span class="group-stars">${earned}/${group.length * 3}★</span>
+        <p>${world.description}</p>
       </div>
-      <div class="level-grid"></div>
+      <div class="world-groups"></div>
     `;
-    const grid = section.querySelector('.level-grid');
-    group.forEach((item) => grid.appendChild(makeLevelCard(item)));
-    difficultySections.appendChild(section);
+
+    const groupsRoot = worldSection.querySelector('.world-groups');
+    for (const difficulty of world.groups) {
+      const group = worldLevels.filter((item) => item.difficulty === difficulty);
+      if (!group.length) continue;
+      const section = document.createElement('section');
+      section.className = 'difficulty-section';
+      const groupEarned = group.reduce((sum, item) => sum + (state.saved.bestStars[item.id] || 0), 0);
+      section.innerHTML = `
+        <div class="section-heading difficulty-heading">
+          <div>
+            <p class="eyebrow">${difficulty}</p>
+            <h2>${groupTitle(difficulty)}</h2>
+          </div>
+          <span class="group-stars">${groupEarned}/${group.length * 3}★</span>
+        </div>
+        <div class="level-grid"></div>
+      `;
+      const grid = section.querySelector('.level-grid');
+      group.forEach((item) => grid.appendChild(makeLevelCard(item)));
+      groupsRoot.appendChild(section);
+    }
+    difficultySections.appendChild(worldSection);
   }
 }
 
@@ -147,10 +204,11 @@ function makeLevelCard(item) {
   const button = document.createElement('button');
   button.className = `level-card ${best ? 'completed' : ''} ${unlocked ? '' : 'locked'}`;
   button.disabled = !unlocked;
+  const routeLabel = item.slope === 1 ? item.subtitle : `Ruta salto ${item.slope} · ${item.subtitle}`;
   button.innerHTML = `
     <span class="level-number">Nivel ${item.number}</span>
     <span class="level-name">${unlocked ? item.name : 'Bloqueado'}</span>
-    <span class="level-clues">${unlocked ? item.subtitle : `Necesitas ${item.unlockStars}★ totales`}</span>
+    <span class="level-clues">${unlocked ? routeLabel : `Necesitas ${item.unlockStars}★ totales`}</span>
     <span class="card-stars" aria-label="${best} estrellas">${starString(best)}</span>
     ${unlocked ? '' : '<span class="lock-mark">🔒</span>'}
   `;
@@ -186,6 +244,23 @@ function starString(count) {
   return `${'★'.repeat(count)}${'☆'.repeat(3 - count)}`;
 }
 
+function updateDirectionCallout() {
+  if (!directionCallout) return;
+  const slope = activeSlope();
+  const shouldShow = !state.isTutorial && slope !== 1 && !state.saved.seenDirections[String(slope)];
+  directionCallout.classList.toggle('hidden', !shouldShow);
+  if (!shouldShow) return;
+  $('#directionTitle').textContent = `Nueva ruta · salto ${slope}`;
+  $('#directionText').textContent = `Al avanzar una columna, la ruta baja ${slope} casillas. Si sale del tablero, continúa por el borde opuesto.`;
+}
+
+function dismissDirectionCallout() {
+  const slope = activeSlope();
+  state.saved.seenDirections[String(slope)] = true;
+  persist();
+  directionCallout.classList.add('hidden');
+}
+
 function startLevel(index, tutorial = false) {
   const item = LEVELS[index];
   if (!tutorial && !isUnlocked(item)) {
@@ -213,10 +288,15 @@ function startLevel(index, tutorial = false) {
   $('#notesBtn').setAttribute('aria-pressed', 'false');
   $('#routesBtn').classList.add('active');
   $('#routesBtn').setAttribute('aria-pressed', 'true');
+  $('#routesBtn').innerHTML = 'Rutas <span>●</span>';
   $('#routesBtn').classList.toggle('hidden', tutorial);
   $('#hintBtn').classList.toggle('hidden', tutorial);
   $('#gameStarsBalance').classList.toggle('hidden', tutorial);
-  $('#gameMeta').textContent = tutorial ? 'Tutorial opcional' : `Nivel ${item.number} · ${item.difficulty}`;
+
+  const world = worldFor(item);
+  $('#gameMeta').textContent = tutorial
+    ? 'Tutorial opcional'
+    : `Nivel ${item.number} · ${world.name} · ${item.difficulty}`;
   $('#gameTitle').textContent = tutorial ? 'Aprende las rutas' : item.name;
 
   hubScreen.classList.remove('active');
@@ -227,6 +307,7 @@ function startLevel(index, tutorial = false) {
   renderStarSummaries();
   updateHistoryButtons();
   updateTutorial();
+  updateDirectionCallout();
   startTimer();
 }
 
@@ -238,6 +319,7 @@ function leaveGame() {
   hubScreen.classList.add('active');
   mainNav.classList.remove('hidden');
   tutorialCallout.classList.add('hidden');
+  directionCallout?.classList.add('hidden');
   renderHub();
 }
 
@@ -297,7 +379,8 @@ function paintSelection() {
   const { row, col } = state.selected;
   const selectedKey = cellKey(row, col);
   const selectedValue = state.values[row][col];
-  const routeKeys = new Set(routeCellsFor(row, col, 1).map((cell) => cellKey(cell.row, cell.col)));
+  const slope = activeSlope();
+  const routeKeys = new Set(routeCellsFor(row, col, slope).map((cell) => cellKey(cell.row, cell.col)));
 
   document.querySelectorAll('.cell').forEach((cell) => {
     const r = Number(cell.dataset.row);
@@ -309,19 +392,28 @@ function paintSelection() {
     if (firstLevelHelp() && selectedValue && state.values[r][c] === selectedValue) cell.classList.add('same-value');
   });
 
-  if (state.routesVisible) addWrapMarkers(row, col);
+  if (state.routesVisible) addWrapMarkers(row, col, slope);
 }
 
-function addWrapMarkers(row, col) {
-  const route = routeCellsFor(row, col, 1);
+function addWrapMarkers(row, col, slope) {
+  const route = routeCellsFor(row, col, slope);
   const sorted = [...route].sort((a, b) => a.col - b.col);
+  const signedStep = slope <= Math.floor(SIZE / 2) ? slope : slope - SIZE;
+
   for (let i = 0; i < sorted.length - 1; i++) {
-    const a = sorted[i], b = sorted[i + 1];
-    if (Math.abs(b.row - a.row) > 1) {
+    const a = sorted[i];
+    const b = sorted[i + 1];
+    const rawNext = a.row + signedStep;
+    if (rawNext >= SIZE) {
       const aCell = cellElement(a.row, a.col);
       const bCell = cellElement(b.row, b.col);
-      if (aCell) aCell.appendChild(makeDot(a.row > b.row ? 'edge-bottom' : 'edge-top', 'edge-right'));
-      if (bCell) bCell.appendChild(makeDot(a.row > b.row ? 'edge-top' : 'edge-bottom', 'edge-left'));
+      if (aCell) aCell.appendChild(makeDot('edge-bottom', 'edge-right'));
+      if (bCell) bCell.appendChild(makeDot('edge-top', 'edge-left'));
+    } else if (rawNext < 0) {
+      const aCell = cellElement(a.row, a.col);
+      const bCell = cellElement(b.row, b.col);
+      if (aCell) aCell.appendChild(makeDot('edge-top', 'edge-right'));
+      if (bCell) bCell.appendChild(makeDot('edge-bottom', 'edge-left'));
     }
   }
 }
@@ -342,7 +434,7 @@ function renderNumberPad() {
   const used = new Set();
 
   if (firstLevelHelp() && state.selected) {
-    system.peers.get(cellKey(state.selected.row, state.selected.col))?.forEach((key) => {
+    constraintSystem().peers.get(cellKey(state.selected.row, state.selected.col))?.forEach((key) => {
       const [r, c] = key.split(',').map(Number);
       if (state.values[r][c]) used.add(state.values[r][c]);
     });
@@ -454,7 +546,7 @@ function eraseSelected() {
 }
 
 function removeNoteFromPeers(row, col, n) {
-  system.peers.get(cellKey(row, col))?.forEach((key) => state.notes.get(key)?.delete(n));
+  constraintSystem().peers.get(cellKey(row, col))?.forEach((key) => state.notes.get(key)?.delete(n));
 }
 
 function requestHint() {
@@ -500,7 +592,7 @@ function boardComplete() {
 
 function boardValid() {
   if (!boardComplete()) return false;
-  return system.units.every((unit) => {
+  return constraintSystem().units.every((unit) => {
     const values = unit.cells.map(({ row, col }) => state.values[row][col]);
     return new Set(values).size === SIZE && values.every((value) => SYMBOLS.includes(value));
   });
@@ -668,6 +760,7 @@ $('#hintBtn').addEventListener('click', requestHint);
 $('#undoBtn').addEventListener('click', undoMove);
 $('#redoBtn').addEventListener('click', redoMove);
 $('#tutorialNextBtn').addEventListener('click', nextTutorialStep);
+$('#directionDismissBtn').addEventListener('click', dismissDirectionCallout);
 $('#levelsBtn').addEventListener('click', () => {
   victoryDialog.close();
   leaveGame();
