@@ -16,12 +16,59 @@ const systemCache = new Map();
 // Conservamos la clave v0.2 para no perder el progreso ya guardado.
 const STORAGE_KEY = 'sudoproyective-v02';
 const HINT_COST = 1;
+
+function levelsForWorld(worldId) {
+  return LEVELS.filter((item) => item.world === worldId);
+}
+
+function worldMaxStars(worldId) {
+  return levelsForWorld(worldId).length * 3;
+}
+
+function worldStarTotal(worldId) {
+  return levelsForWorld(worldId).reduce(
+    (sum, item) => sum + Number(state.saved.bestStars[item.id] || 0),
+    0
+  );
+}
+
 const TROPHIES = [
-  { id: 'bronze', icon: '🥉', name: 'Brújula de Bronce', text: 'Completa el nivel 6.', level: 6 },
-  { id: 'silver', icon: '🥈', name: 'Cartógrafo de Plata', text: 'Completa el nivel 12.', level: 12 },
-  { id: 'gold', icon: '🥇', name: 'Geómetra de Oro', text: 'Completa el nivel 18.', level: 18 },
-  { id: 'second-direction', icon: '🧭', name: 'Navegante de Dos Rutas', text: 'Completa el nivel 24.', level: 24 },
-  { id: 'master', icon: '🏆', name: 'Horizonte Perfecto', text: 'Consigue las 72 estrellas.', stars: 72 },
+  ...WORLDS.flatMap((world) => {
+    const levelCount = levelsForWorld(world.id).length;
+    return [
+      {
+        id: `world-${world.id}-bronze`,
+        icon: '🥉',
+        name: `${world.name} · Bronce`,
+        text: `Consigue ${levelCount}★ en ${world.name}.`,
+        world: world.id,
+        threshold: levelCount,
+      },
+      {
+        id: `world-${world.id}-silver`,
+        icon: '🥈',
+        name: `${world.name} · Plata`,
+        text: `Consigue ${levelCount * 2}★ en ${world.name}.`,
+        world: world.id,
+        threshold: levelCount * 2,
+      },
+      {
+        id: `world-${world.id}-gold`,
+        icon: '🥇',
+        name: `${world.name} · Oro`,
+        text: `Consigue las ${levelCount * 3}★ de ${world.name}.`,
+        world: world.id,
+        threshold: levelCount * 3,
+      },
+    ];
+  }),
+  {
+    id: 'platinum',
+    icon: '🏆',
+    name: 'Trofeo de Platino',
+    text: 'Consigue el trofeo de oro en todos los mundos.',
+    platinum: true,
+  },
 ];
 
 const state = {
@@ -71,14 +118,9 @@ function totalStars() {
   return Object.values(state.saved.bestStars).reduce((sum, n) => sum + Number(n || 0), 0);
 }
 
-function maxCompletedLevel() {
-  return LEVELS.reduce((max, item) => state.saved.bestStars[item.id] ? Math.max(max, item.number) : max, 0);
-}
-
 function cloneGrid(grid) { return grid.map((row) => [...row]); }
 function level() { return LEVELS[state.levelIndex]; }
 function isGiven(row, col) { return level().puzzle[row][col] !== 0; }
-function isUnlocked(item) { return totalStars() >= item.unlockStars; }
 function slopesFor(item = level()) { return item.slopes?.length ? item.slopes : [item.slope || 1]; }
 function activeSlope(item = level()) { return slopesFor(item)[0]; }
 function constraintSystem(item = level()) {
@@ -109,7 +151,7 @@ function renderHub() {
   renderStarSummaries();
   renderLevels();
   renderTrophies();
-  renderUnlockProgress();
+  renderMasteryProgress();
 }
 
 function renderStarSummaries() {
@@ -122,19 +164,11 @@ function renderStarSummaries() {
   $('#gameStarsBalance').textContent = `Disponibles: ${available}★`;
 }
 
-function renderUnlockProgress() {
+function renderMasteryProgress() {
   const total = totalStars();
-  const next = LEVELS.find((item) => item.unlockStars > total);
-  if (!next) {
-    $('#nextUnlockText').textContent = 'Todos los niveles desbloqueados';
-    $('#unlockProgress').style.width = '100%';
-    return;
-  }
-  const previous = [...LEVELS].reverse().find((item) => item.unlockStars <= total)?.unlockStars || 0;
-  const span = Math.max(1, next.unlockStars - previous);
-  const progress = Math.max(0, Math.min(1, (total - previous) / span));
-  $('#nextUnlockText').textContent = `Nivel ${next.number} · ${next.unlockStars}★`;
-  $('#unlockProgress').style.width = `${Math.round(progress * 100)}%`;
+  const maximum = LEVELS.length * 3;
+  $('#nextUnlockText').textContent = `Perfección global · ${total}/${maximum}★`;
+  $('#unlockProgress').style.width = `${Math.round((total / maximum) * 100)}%`;
 }
 
 function groupTitle(difficulty) {
@@ -149,16 +183,26 @@ function groupTitle(difficulty) {
   return labels[difficulty] || difficulty;
 }
 
+function worldMedal(worldId) {
+  const stars = worldStarTotal(worldId);
+  const levels = levelsForWorld(worldId).length;
+  if (stars >= levels * 3) return '🥇 Oro';
+  if (stars >= levels * 2) return '🥈 Plata';
+  if (stars >= levels) return '🥉 Bronce';
+  return 'Sin trofeo';
+}
+
 function renderLevels() {
   difficultySections.innerHTML = '';
 
   for (const world of WORLDS) {
-    const worldLevels = LEVELS.filter((item) => item.world === world.id);
+    const worldLevels = levelsForWorld(world.id);
     if (!worldLevels.length) continue;
 
     const worldSection = document.createElement('section');
     worldSection.className = 'world-section';
-    const earned = worldLevels.reduce((sum, item) => sum + (state.saved.bestStars[item.id] || 0), 0);
+    const earned = worldStarTotal(world.id);
+    const count = worldLevels.length;
     worldSection.innerHTML = `
       <div class="info-card world-card">
         <div class="section-heading difficulty-heading">
@@ -166,9 +210,10 @@ function renderLevels() {
             <p class="eyebrow">${world.kicker}</p>
             <h2>${world.name}</h2>
           </div>
-          <span class="group-stars">${earned}/${worldLevels.length * 3}★</span>
+          <span class="group-stars">${earned}/${count * 3}★</span>
         </div>
         <p>${world.description}</p>
+        <p><strong>Rango actual:</strong> ${worldMedal(world.id)} · 🥉 ${count}★ · 🥈 ${count * 2}★ · 🥇 ${count * 3}★</p>
       </div>
       <div class="world-groups"></div>
     `;
@@ -199,20 +244,17 @@ function renderLevels() {
 }
 
 function makeLevelCard(item) {
-  const unlocked = isUnlocked(item);
   const best = state.saved.bestStars[item.id] || 0;
   const button = document.createElement('button');
-  button.className = `level-card ${best ? 'completed' : ''} ${unlocked ? '' : 'locked'}`;
-  button.disabled = !unlocked;
+  button.className = `level-card ${best ? 'completed' : ''}`;
   const routeLabel = item.slope === 1 ? item.subtitle : `Ruta salto ${item.slope} · ${item.subtitle}`;
   button.innerHTML = `
     <span class="level-number">Nivel ${item.number}</span>
-    <span class="level-name">${unlocked ? item.name : 'Bloqueado'}</span>
-    <span class="level-clues">${unlocked ? routeLabel : `Necesitas ${item.unlockStars}★ totales`}</span>
+    <span class="level-name">${item.name}</span>
+    <span class="level-clues">${routeLabel}</span>
     <span class="card-stars" aria-label="${best} estrellas">${starString(best)}</span>
-    ${unlocked ? '' : '<span class="lock-mark">🔒</span>'}
   `;
-  if (unlocked) button.addEventListener('click', () => startLevel(item.number - 1, false));
+  button.addEventListener('click', () => startLevel(item.number - 1, false));
   return button;
 }
 
@@ -235,8 +277,10 @@ function renderTrophies() {
 }
 
 function trophyEarned(trophy) {
-  if (trophy.level) return maxCompletedLevel() >= trophy.level;
-  if (trophy.stars) return totalStars() >= trophy.stars;
+  if (trophy.platinum) {
+    return WORLDS.every((world) => worldStarTotal(world.id) >= worldMaxStars(world.id));
+  }
+  if (trophy.world) return worldStarTotal(trophy.world) >= trophy.threshold;
   return false;
 }
 
@@ -263,10 +307,6 @@ function dismissDirectionCallout() {
 
 function startLevel(index, tutorial = false) {
   const item = LEVELS[index];
-  if (!tutorial && !isUnlocked(item)) {
-    showToast(`Necesitas ${item.unlockStars}★ totales para desbloquear este nivel.`);
-    return;
-  }
 
   state.levelIndex = index;
   state.isTutorial = tutorial;
@@ -645,8 +685,7 @@ function completeLevel() {
   $('#victoryReward').textContent = rewardParts.join(' · ');
 
   const next = LEVELS[state.levelIndex + 1];
-  const canContinue = next && isUnlocked(next);
-  $('#nextLevelBtn').style.display = canContinue ? '' : 'none';
+  $('#nextLevelBtn').style.display = next ? '' : 'none';
   victoryDialog.showModal();
   renderHub();
 }
