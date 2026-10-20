@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { makeConstraintSystem, makeRoutes, routeId, SIZE } from '../js/geometry.js';
 
 const system = makeConstraintSystem([1]);
-assert.equal(system.units.length, 21, 'Debe haber 21 unidades en v0.1');
+assert.equal(system.units.length, 21, 'Debe haber 21 unidades en v0.2');
 
 for (let row = 0; row < SIZE; row++) {
   for (let col = 0; col < SIZE; col++) {
