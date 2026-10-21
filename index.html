@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1018" />
   <meta name="description" content="Sudoproyective — puzzle matemático inspirado en geometría afín finita." />
-  <title>Sudoproyective · v0.4.0</title>
+  <title>Sudoproyective · v0.5.0</title>
   <link rel="stylesheet" href="styles.css" />
   <style>
     .cell.number-focus:not(.selected) {
@@ -77,33 +77,40 @@
     }
     .world-card { display: none; }
     .difficulty-section { margin: 22px 0 28px; }
-    .difficulty-section .difficulty-heading {
+    .simple-difficulty-heading {
       margin-bottom: 9px;
       padding: 0 2px;
     }
-    .difficulty-section .difficulty-heading h2 { display: none; }
-    .difficulty-section .difficulty-heading .eyebrow {
+    .simple-difficulty-heading h2 {
       margin: 0;
       color: #dce7f6;
-      font-size: .82rem;
+      font-size: .88rem;
+      text-transform: uppercase;
       letter-spacing: .08em;
     }
-    .level-grid {
-      display: grid !important;
-      grid-template-columns: 1fr !important;
-      gap: 7px !important;
+    .level-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 7px;
     }
-    .level-card {
-      min-height: 54px !important;
-      display: grid !important;
+    .level-row {
+      width: 100%;
+      min-height: 54px;
+      display: grid;
       grid-template-columns: 30px 1fr auto;
       align-items: center;
       gap: 10px;
-      padding: 10px 13px !important;
-      border-radius: 14px !important;
+      padding: 10px 13px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel);
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
     }
-    .level-card::before {
-      content: "○";
+    .level-row:hover { background: var(--cell-hover); }
+    .level-row.completed { border-color: rgba(112,225,193,.4); }
+    .level-row-status {
       width: 25px;
       height: 25px;
       display: grid;
@@ -113,25 +120,16 @@
       color: var(--muted);
       font-weight: 900;
     }
-    .level-card.completed::before {
-      content: "✓";
+    .level-row.completed .level-row-status {
       color: #07120f;
       background: var(--accent);
       border-color: var(--accent);
     }
-    .level-card::after { display: none !important; }
-    .level-number {
-      grid-column: 2;
-      color: var(--text) !important;
-      font-size: .95rem !important;
-      font-weight: 800 !important;
-      text-transform: none !important;
-      letter-spacing: 0 !important;
+    .level-row-label {
+      font-size: .95rem;
+      font-weight: 800;
     }
-    .level-name, .level-clues { display: none !important; }
-    .card-stars {
-      grid-column: 3;
-      margin: 0 !important;
+    .level-row-stars {
       color: var(--route);
       letter-spacing: .08em;
       font-size: .92rem;
@@ -146,7 +144,7 @@
   <main class="app-shell">
     <header class="topbar">
       <div>
-        <p class="eyebrow">Prototipo v0.4.0</p>
+        <p class="eyebrow">Prototipo v0.5.0</p>
         <h1>Sudoproyective</h1>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
@@ -164,18 +162,18 @@
           <div>
             <p class="hero-kicker">Fila · columna · ruta</p>
             <h2>Tu recorrido</h2>
-            <p>Todos los niveles están disponibles desde el inicio. Elige una de las seis rutas del tablero 7×7 y perfecciona cada mundo con estrellas.</p>
+            <p>Hay 30 niveles en cada una de las seis rutas del tablero 7×7: 10 fáciles, 10 intermedios y 10 difíciles. Todos están disponibles desde el inicio.</p>
           </div>
           <div class="progress-card">
             <span class="metric-label">Camino al platino</span>
-            <strong id="nextUnlockText">Perfección global · 0/144★</strong>
+            <strong id="nextUnlockText">Perfección global · 0/540★</strong>
             <div class="progress-track"><span id="unlockProgress"></span></div>
           </div>
         </div>
 
         <div class="info-card route-selector-card">
           <strong>Elige la ruta</strong>
-          <p>Cambia de dirección sin recorrer una lista larga. Cada pestaña muestra sólo los niveles de esa ruta.</p>
+          <p>Cada pestaña muestra 30 niveles de una sola ruta, agrupados por dificultad.</p>
           <div id="routeTabs" class="route-tabs" role="tablist" aria-label="Selector de ruta"></div>
         </div>
 
@@ -223,11 +221,11 @@
         </div>
         <div class="info-card">
           <strong>Pistas elegidas por ti</strong>
-          <p>Selecciona una casilla editable y luego pulsa Pista. Se revelará únicamente esa casilla y se gastará 1★ disponible.</p>
+          <p>Selecciona una casilla editable y luego pulsa Pista. El costo depende de la dificultad: 2★ en Fácil, 3★ en Intermedio y 4★ en Difícil.</p>
         </div>
         <div class="info-card">
           <strong>Estrellas, pistas y maestría</strong>
-          <p>Completar un nivel entrega 3★ sin pistas, 2★ usando una pista y 1★ usando dos o más. Las estrellas históricas determinan bronce, plata y oro en cada ruta; las disponibles pueden gastarse en pistas.</p>
+          <p>Completar un nivel entrega 3★ sin pistas, 2★ usando una pista y 1★ usando dos o más. Las pistas cuestan 2★, 3★ o 4★ según la dificultad. Las estrellas históricas determinan bronce, plata y oro en cada ruta.</p>
         </div>
       </div>
 
@@ -252,7 +250,7 @@
         <button id="backBtn" class="icon-btn" aria-label="Volver">←</button>
         <div>
           <p id="gameMeta" class="eyebrow">Nivel 1</p>
-          <h2 id="gameTitle">Primer cruce</h2>
+          <h2 id="gameTitle">Nivel 1</h2>
         </div>
         <div id="timer" class="timer">00:00</div>
       </div>
@@ -280,7 +278,7 @@
       <div class="status-row game-tools">
         <button id="notesBtn" class="mode-btn" aria-pressed="false">Notas <span>○</span></button>
         <button id="routesBtn" class="mode-btn active" aria-pressed="true">Rutas <span>●</span></button>
-        <button id="hintBtn" class="mode-btn">Pista · 1★</button>
+        <button id="hintBtn" class="mode-btn">Pista</button>
       </div>
       <div class="status-row secondary-tools">
         <div class="history-tools" aria-label="Historial de movimientos">
@@ -348,82 +346,5 @@
   </dialog>
 
   <script type="module" src="js/app.js"></script>
-  <script>
-    (() => {
-      const routeNames = ['Ruta 1', 'Ruta 2', 'Ruta 3', 'Ruta 4', 'Ruta 5', 'Ruta 6'];
-      const routeReplacements = [
-        ['Ruta +1', 'Ruta 1'], ['Ruta +2', 'Ruta 2'], ['Ruta +3', 'Ruta 3'],
-        ['Ruta −3', 'Ruta 4'], ['Ruta −2', 'Ruta 5'], ['Ruta −1', 'Ruta 6'],
-      ];
-      const directionReplacements = [
-        ['Nueva ruta · +1', 'Nueva ruta · 1'], ['Nueva ruta · +2', 'Nueva ruta · 2'],
-        ['Nueva ruta · +3', 'Nueva ruta · 3'], ['Nueva ruta · -3', 'Nueva ruta · 4'],
-        ['Nueva ruta · -2', 'Nueva ruta · 5'], ['Nueva ruta · -1', 'Nueva ruta · 6'],
-      ];
-      let scheduled = false;
-
-      function replaceRouteText(text) {
-        return routeReplacements.reduce((value, [from, to]) => value.replaceAll(from, to), text);
-      }
-
-      function localLevelNumber(globalNumber) {
-        if (globalNumber <= 18) return globalNumber;
-        return ((globalNumber - 19) % 6) + 1;
-      }
-
-      function normalizeInterface() {
-        scheduled = false;
-
-        document.querySelectorAll('#routeTabs .route-tab span').forEach((span, index) => {
-          const value = routeNames[index];
-          if (value && span.textContent !== value) span.textContent = value;
-        });
-
-        document.querySelectorAll('#difficultySections .level-card .level-number').forEach((label, index) => {
-          const value = `Nivel ${index + 1}`;
-          if (label.textContent !== value) label.textContent = value;
-        });
-
-        document.querySelectorAll('#trophyGrid strong, #trophyGrid p').forEach((node) => {
-          const value = replaceRouteText(node.textContent);
-          if (node.textContent !== value) node.textContent = value;
-        });
-
-        const meta = document.getElementById('gameMeta');
-        const title = document.getElementById('gameTitle');
-        if (meta && title) {
-          const match = meta.textContent.match(/^Nivel\s+(\d+)\s+·\s+(.+)$/);
-          if (match) {
-            const globalNumber = Number(match[1]);
-            const rest = replaceRouteText(match[2]);
-            meta.textContent = rest;
-            title.textContent = `Nivel ${localLevelNumber(globalNumber)}`;
-          } else {
-            const value = replaceRouteText(meta.textContent);
-            if (meta.textContent !== value) meta.textContent = value;
-          }
-        }
-
-        const directionTitle = document.getElementById('directionTitle');
-        if (directionTitle) {
-          let value = directionTitle.textContent;
-          directionReplacements.forEach(([from, to]) => { value = value.replaceAll(from, to); });
-          if (directionTitle.textContent !== value) directionTitle.textContent = value;
-        }
-      }
-
-      function scheduleNormalize() {
-        if (scheduled) return;
-        scheduled = true;
-        requestAnimationFrame(normalizeInterface);
-      }
-
-      window.addEventListener('DOMContentLoaded', () => {
-        const observer = new MutationObserver(scheduleNormalize);
-        observer.observe(document.body, { childList: true, subtree: true, characterData: true });
-        scheduleNormalize();
-      });
-    })();
-  </script>
 </body>
 </html>
