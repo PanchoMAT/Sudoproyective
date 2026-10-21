@@ -212,6 +212,7 @@ function prepareReveal() {
   clearRevealTimer();
   $('#projectiveSummary').classList.add('hidden');
   $('#spotItCard').classList.add('hidden');
+  $('#projectiveSubtitle')?.classList.remove('final-focus');
   $('#awardCredentialBtn').disabled = true;
   $('#awardCredentialBtn').textContent = 'Completa la construcción';
   $('#projectiveNextStageBtn').disabled = false;
@@ -247,8 +248,6 @@ function finishReveal() {
   clearRevealTimer();
   const svg = revealSvg();
   svg?.classList.add('complete');
-  $('#projectiveSummary').classList.remove('hidden');
-  $('#spotItCard').classList.remove('hidden');
   $('#projectiveNextStageBtn').disabled = true;
   $('#projectiveNextStageBtn').textContent = 'Construcción completa';
   patchSave({ projectiveFinalRewardUnlocked: true });
@@ -256,9 +255,19 @@ function finishReveal() {
   const award = $('#awardCredentialBtn');
   award.disabled = false;
   award.textContent = credentialEarned() ? 'Ver certificado' : 'Obtener certificado';
-  typeProjectiveNarration('Al añadir la recta del infinito, completaste el plano proyectivo PG(2,7). La geometría oculta de Sudoproyective queda revelada.');
+
+  const subtitle = $('#projectiveSubtitle');
+  subtitle?.classList.add('final-focus');
+  typeProjectiveNarration('¡Lo lograste! Acabas de construir el plano proyectivo PG(2,7).');
+  subtitle?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  celebrationTimer = setTimeout(showFinalCelebration, reduced ? 80 : 3000);
+  celebrationTimer = setTimeout(() => {
+    $('#projectiveSummary').classList.remove('hidden');
+    $('#spotItCard').classList.remove('hidden');
+    subtitle?.classList.remove('final-focus');
+    showFinalCelebration();
+  }, reduced ? 6500 : 10000);
 }
 
 function stageDuration(stage) {
