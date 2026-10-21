@@ -2,7 +2,7 @@
 
 Puzzle matemático independiente inspirado en geometría afín y proyectiva finita.
 
-## v0.6
+## v0.7
 
 El tablero es `7 × 7` con símbolos `1,…,7`. Cada nivel de campaña exige no repetir números en 7 filas, 7 columnas y 7 rutas de una familia de rectas paralelas.
 
@@ -27,32 +27,31 @@ Cada ruta contiene 30 puzzles fijos:
 - niveles 11–20: **Intermedio**;
 - niveles 21–30: **Difícil**.
 
-En total hay `6 × 30 = 180` niveles. Los 180 puzzles son distintos y tienen solución única bajo la ruta correspondiente.
+En total hay `6 × 30 = 180` niveles, distintos y con solución única bajo la ruta correspondiente.
 
-### Pistas
+## Proyectivo: desafío final
 
-- Fácil: **2★**;
-- Intermedio: **3★**;
-- Difícil: **4★**.
+Después del selector de las seis rutas aparece **Proyectivo**, bloqueado desde el comienzo. Al tocar el candado se explica que para abrirlo hay que completar los 60 niveles Difíciles: los niveles 21–30 de las seis rutas.
 
-La puntuación del nivel sigue siendo 3★ sin pistas, 2★ con una pista y 1★ con dos o más.
+Al completar el último nivel Difícil pendiente, el juego muestra automáticamente **¡Desafío final desbloqueado!** y permite entrar directamente a Proyectivo.
 
-## Proyecto final: geometría oculta
+Proyectivo contiene seis desafíos **Ultraexperto**, uno por pendiente `1,…,6`. Son puzzles fijos con 12 pistas iniciales, solución única, guardado automático, notas y deshacer/rehacer. No entregan estrellas ni consumen pistas.
 
-La quinta pestaña, **Proyecto**, existe desde el inicio pero permanece bloqueada. Se desbloquea al completar los 60 niveles Difíciles: los niveles 21–30 de las seis rutas.
+Al resolver un Ultraexperto se revela lentamente la familia de siete rectas asociada. Las siete rectas se dibujan con colores distintos y se prolongan visualmente hasta su punto del infinito.
 
-El Proyecto contiene seis desafíos **Ultraexperto**, uno por pendiente. Son puzzles fijos, distintos de la campaña, con 12 pistas iniciales, solución única, guardado automático, notas y deshacer/rehacer. No entregan estrellas ni consumen pistas: forman una fase final independiente del sistema de trofeos.
+## Construcción final de PG(2,7)
 
-Al resolver un Ultraexperto se revela visualmente la familia de siete rectas asociada a esa pendiente.
+Al completar los seis Ultraexpertos se habilita una animación final explicada con subtítulos.
 
-Después de completar los seis desafíos se habilita la construcción final:
+La visualización muestra ocho mini-tableros en disposición circular:
 
-1. las seis familias diagonales aportan `6 × 7 = 42` rectas;
-2. las 7 filas corresponden a la dirección `m = 0`;
-3. las 7 columnas corresponden a la dirección `m = ∞`;
-4. en total aparecen las `8 × 7 = 56` rectas de `AG(2,7)`;
-5. se añade un punto del infinito por cada una de las ocho direcciones;
-6. los ocho puntos nuevos forman la recta del infinito.
+- filas: `m = 0`;
+- las seis rutas: `m = 1,…,6`;
+- columnas: `m = ∞`.
+
+Cada mini-tablero representa la misma colección de 49 puntos del plano afín, organizada según una de sus ocho direcciones. Las familias se construyen una por una; cada una aporta siete rectas y un punto del infinito.
+
+Después de las ocho familias aparecen los ocho puntos del infinito. Una cuerda esquemática pasa por ellos para representar la única **recta del infinito**. La disposición circular es deliberadamente visual: la cuerda representa incidencia proyectiva, no una recta euclidiana del dibujo.
 
 Así se obtiene `PG(2,7)`:
 
@@ -63,11 +62,11 @@ Así se obtiene `PG(2,7)`:
 - dos puntos determinan una recta;
 - dos rectas se encuentran en un punto.
 
-La secuencia utiliza animaciones SVG/CSS para revelar progresivamente familias, puntos del infinito y recta del infinito.
+La secuencia tarda aproximadamente medio minuto en reproducción automática y también ofrece **Siguiente etapa** y **Repetir animación**.
 
 ## Conexión con Spot It
 
-La construcción final muestra también la relación combinatoria con un Spot It/Dobble ideal de orden 7: si los puntos son símbolos y las rectas son cartas, se obtienen 57 símbolos y 57 cartas con 8 símbolos por carta; cada par de cartas comparte exactamente un símbolo.
+Si los puntos de `PG(2,7)` se interpretan como símbolos y las rectas como cartas, se obtiene un diseño ideal de orden 7 con 57 símbolos, 57 cartas y 8 símbolos por carta. Dos cartas comparten exactamente un símbolo porque dos rectas proyectivas se cortan en exactamente un punto.
 
 ## Distinción oculta
 
@@ -87,24 +86,20 @@ Cada ruta contiene 30 niveles y un máximo de 90★:
 - 🥈 Plata: 60★;
 - 🥇 Oro: 90★.
 
-El trofeo de platino exige oro en las seis rutas. El máximo global de la campaña permanece en `180 × 3 = 540★`. El Proyecto final no modifica ese total.
+El trofeo de platino exige oro en las seis rutas. El máximo global de la campaña permanece en `180 × 3 = 540★`. Proyectivo no modifica ese total.
 
 ## Modo Revisión
 
-La URL con `?review=1` activa una capa de prueba aislada para revisar el proyecto completo sin modificar el progreso real.
+La URL con `?review=1` activa un modo de auditoría aislado del progreso real. Permite:
 
-Incluye:
-
-- acceso directo a cualquier Ruta 1–6 y Nivel 1–30;
-- botones para resolver automáticamente el tablero abierto o dejar una sola casilla pendiente;
-- simulación de 0/60, 59/60 y 60/60 niveles Difíciles completados;
-- acceso directo a cada Ultraexperto y simulación de 0/6 o 6/6 completados;
-- reproducción individual de las seis animaciones de familias de rectas;
-- inspección por etapas de los 49 puntos, 42 rectas diagonales, filas, columnas, `AG(2,7)`, puntos del infinito y recta del infinito;
-- reproducción de la secuencia completa `AG(2,7) → PG(2,7)`;
-- vista bloqueada de la recompensa `???` y vista directa de la credencial final.
-
-El modo revisión usa una copia temporal de `sudoproyective-v02` almacenada sólo en la sesión del navegador. Al abrir la app sin `?review=1`, se vuelve automáticamente al progreso real.
+- abrir cualquier nivel de campaña;
+- simular `0/60`, `59/60` y `60/60` niveles Difíciles;
+- probar el candado y la ventana automática de desbloqueo de Proyectivo;
+- abrir o completar cualquiera de los seis Ultraexpertos;
+- reproducir individualmente las ocho familias de rectas;
+- inspeccionar la construcción circular por etapas;
+- lanzar la secuencia final completa;
+- mostrar la credencial oculta.
 
 ## Pruebas
 
@@ -112,4 +107,4 @@ El modo revisión usa una copia temporal de `sudoproyective-v02` almacenada sól
 npm test
 ```
 
-Las pruebas verifican las seis geometrías, los 180 niveles de campaña y los seis Ultraexpertos, incluyendo validez de soluciones, consistencia de pistas y unicidad.
+Las pruebas verifican las seis geometrías, los 180 niveles de campaña, los seis Ultraexpertos y la estructura matemática de `PG(2,7)`.
