@@ -6,13 +6,13 @@ let allowProjectiveClear = false;
 const nativeSetItem = Storage.prototype.setItem;
 const nativeGetItem = Storage.prototype.getItem;
 
-// Conserva los campos del Proyecto cuando el motor principal persiste la clave histórica.
+// Conserva los campos del modo Proyectivo cuando el motor principal persiste la clave histórica.
 Storage.prototype.setItem = function(key, value) {
   if (key === STORAGE_KEY && !allowProjectiveClear) {
     try {
       const current = JSON.parse(nativeGetItem.call(this, key)) || {};
       const next = JSON.parse(value) || {};
-      for (const field of ['ultraCompleted', 'ultraLevels', 'projectiveCredential']) {
+      for (const field of ['ultraCompleted', 'ultraLevels', 'projectiveCredential', 'projectiveUnlockSeen']) {
         if (!(field in next) && field in current) next[field] = current[field];
       }
       value = JSON.stringify(next);
