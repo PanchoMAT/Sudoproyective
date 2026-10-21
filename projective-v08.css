@@ -195,7 +195,7 @@
   transform: rotate(var(--rot));
   animation: confettiFall var(--duration) linear var(--delay) infinite;
 }
-.firework { position: absolute; width: 7px; height: 7px; border-radius: 50%; opacity: 0; }
+.firework { position: absolute; width: 7px; height: 7px; border-radius: 50%; opacity: 1; }
 .firework::before {
   content: "";
   position: absolute;
@@ -207,9 +207,9 @@
     0 54px #c77dff, -38px 38px #ffa94d, -54px 0 #f783ac, -38px -38px #70d6ff;
   animation: fireworkBurst 2.4s ease-out infinite;
 }
-.firework.fw1 { left: 20%; top: 29%; animation-delay: .1s; }
-.firework.fw2 { right: 18%; top: 21%; animation-delay: .8s; }
-.firework.fw3 { left: 52%; top: 14%; animation-delay: 1.5s; }
+.firework.fw1 { left: 20%; top: 29%; }
+.firework.fw2 { right: 18%; top: 21%; }
+.firework.fw3 { left: 52%; top: 14%; }
 .firework.fw1::before { animation-delay: .1s; }
 .firework.fw2::before { animation-delay: .8s; }
 .firework.fw3::before { animation-delay: 1.5s; }
@@ -223,7 +223,7 @@
 @keyframes confettiFall {
   0% { transform: translate3d(0,-8vh,0) rotate(var(--rot)); }
   50% { transform: translate3d(var(--drift),52vh,0) rotate(calc(var(--rot) + 260deg)); }
-  100% { transform: translate3d(calc(var(--drift) * -1),112vh,0) rotate(calc(var(--rot) + 620deg)); }
+  100% { transform: translate3d(var(--drift),112vh,0) rotate(calc(var(--rot) + 620deg)); }
 }
 @keyframes fireworkBurst {
   0% { opacity:0; transform:scale(.08); }
