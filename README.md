@@ -1,103 +1,71 @@
 # Sudoproyective
 
-Prototipo de puzzle matemático independiente inspirado en geometría afín finita.
+Puzzle matemático independiente inspirado en geometría afín finita.
 
-## v0.3.1
+## v0.4
 
-La versión actual usa un tablero `7 × 7` con símbolos `1,…,7` y tres tipos de unidades `AllDifferent` en cada nivel:
+El tablero sigue siendo `7 × 7` con símbolos `1,…,7`. Cada nivel exige `AllDifferent` en:
 
 - 7 filas;
 - 7 columnas;
 - 7 rutas de una familia de rectas paralelas.
 
-La interfaz no exige conocimientos matemáticos: la regla jugable sigue siendo simplemente **fila, columna y ruta: sin repetir**.
+La regla visible continúa siendo: **fila, columna y ruta: sin repetir**.
 
-### Dos mundos geométricos
+### Seis rutas del tablero 7×7
 
-La v0.3 introduce niveles cuya familia de rutas depende del propio nivel.
+La v0.4 incorpora las seis direcciones diagonales no redundantes de `AG(2,7)`:
 
-**Mundo 1 — Dirección 1**
+- Ruta `+1` → pendiente `m=1`;
+- Ruta `+2` → pendiente `m=2`;
+- Ruta `+3` → pendiente `m=3`;
+- Ruta `−3` → pendiente `m=4 ≡ -3 (mod 7)`;
+- Ruta `−2` → pendiente `m=5 ≡ -2 (mod 7)`;
+- Ruta `−1` → pendiente `m=6 ≡ -1 (mod 7)`.
 
-Las rutas cumplen
+La pendiente `0` coincide con las filas y la dirección vertical con las columnas, por lo que no se presentan como rutas adicionales.
 
-`row = col + b (mod 7)`.
+La pantalla de niveles tiene un selector compacto de pestañas. Sólo se muestran los niveles de la ruta seleccionada.
 
-Contiene los 18 niveles originales, separados en Iniciación, Intermedio y Avanzado.
+### Niveles
 
-**Mundo 2 — Dirección 2**
+La v0.4 contiene 48 puzzles:
 
-Las rutas cumplen
+- Ruta +1: 18 niveles originales;
+- Ruta +2: 6 niveles;
+- Ruta +3: 6 niveles;
+- Ruta −3: 6 niveles;
+- Ruta −2: 6 niveles;
+- Ruta −1: 6 niveles.
 
-`row = 2·col + b (mod 7)`.
+Todos tienen solución única bajo su familia de rutas.
 
-Contiene 6 niveles nuevos, separados en Exploración, Dominio y Desafío. Al avanzar una columna, la ruta avanza dos filas y continúa por el borde opuesto cuando corresponde.
+### Mejoras de juego
 
-Todos los 24 niveles incluidos tienen solución única bajo la familia de rutas que les corresponde.
+- al aparecer exactamente siete copias de un número en el tablero, su botón muestra un `✓`;
+- tocar cualquier casilla del tablero apaga el resaltado de números iguales;
+- al completar un tablero inválido se informa cuántas casillas son incorrectas, pero no cuáles;
+- la pista revela la casilla editable seleccionada por el jugador;
+- todos los niveles siguen abiertos desde el inicio;
+- los niveles completados se reinician al reabrirse, permitiendo mejorar la marca de estrellas;
+- cada ruta entrega trofeos de bronce, plata y oro;
+- el platino exige oro en las seis rutas.
 
-### Acceso y progresión
+### Estrellas
 
-Todos los niveles están desbloqueados desde el inicio. El jugador puede entrar directamente a cualquier puzzle de cualquier mundo.
+- 3★: sin pistas;
+- 2★: una pista;
+- 1★: dos o más pistas.
 
-Las estrellas ya no sirven para abrir niveles: representan el grado de maestría conseguido en cada puzzle y en cada mundo.
-
-Cada nivel entrega:
-
-- 3 estrellas: completar sin pistas;
-- 2 estrellas: completar usando una pista;
-- 1 estrella: completar usando dos o más pistas.
-
-Se mantienen dos cantidades distintas:
-
-- **estrellas totales:** suma de las mejores marcas históricas y base del sistema de trofeos;
-- **estrellas disponibles:** saldo que puede gastarse en pistas. Cada pista cuesta 1 estrella disponible.
-
-Gastar estrellas disponibles no reduce el total histórico ni hace perder trofeos. Repetir un nivel sólo entrega la diferencia si se mejora la mejor marca.
-
-### Trofeos por mundo
-
-Cada mundo tiene tres rangos de maestría:
-
-**Mundo 1 — 18 niveles, máximo 54★**
-
-- 🥉 Bronce: 18★.
-- 🥈 Plata: 36★.
-- 🥇 Oro: 54★.
-
-**Mundo 2 — 6 niveles, máximo 18★**
-
-- 🥉 Bronce: 6★.
-- 🥈 Plata: 12★.
-- 🥇 Oro: 18★.
-
-Los umbrales equivalen de forma natural a un promedio de 1, 2 y 3 estrellas por nivel respectivamente.
-
-**🏆 Trofeo de Platino**
-
-Se obtiene únicamente al conseguir el trofeo de oro en todos los mundos disponibles.
-
-### Interfaz
-
-- navegación por pestañas: Niveles, Tutorial, Reglas y Trofeos;
-- tutorial opcional y separado del progreso;
-- todos los niveles accesibles desde el inicio;
-- rutas visibles/ocultas a voluntad en niveles normales;
-- explicación breve al descubrir una nueva dirección;
-- notas/candidatos;
-- sin corrección inmediata desde el nivel 2;
-- validación sólo al completar el tablero;
-- selector numérico fijo para celular;
-- resaltado opcional de todos los valores iguales desde el selector;
-- deshacer y rehacer movimientos;
-- guardado local automático;
-- cronómetro y pantalla de victoria.
+Las estrellas históricas determinan trofeos. Las estrellas disponibles se pueden gastar en pistas.
 
 ## Matemática
 
-Internamente el tablero se identifica con `AG(2,7) = F_7²`. En coordenadas de pantalla `(row, col)`, una familia de rutas de pendiente `m` cumple
+En coordenadas de pantalla `(row, col)`, una ruta de pendiente `m` cumple
 
 `row = m·col + b (mod 7)`.
 
-La v0.3 usa `m = 1` y `m = 2` en mundos separados. El motor ya admite una lista de pendientes por nivel, de modo que una futura versión puede imponer simultáneamente varias familias de rutas sin rehacer la arquitectura.
+Cada valor `m ∈ {1,2,3,4,5,6}` define una clase paralela distinta del plano afín `AG(2,7)`.
 
 ## Pruebas
 
@@ -107,10 +75,7 @@ npm test
 
 Las pruebas verifican:
 
-- 21 unidades para cada mundo de una sola dirección;
-- 3 unidades y 18 pares incompatibles por celda con una dirección;
-- la geometría de pendientes 1 y 2;
-- una configuración futura con pendientes 1 y 2 simultáneas: 28 unidades, 4 pertenencias y 24 pares por celda;
+- las seis geometrías;
+- 21 unidades, 3 pertenencias y 18 pares por celda en cada ruta;
 - validez de todas las soluciones;
-- unicidad de los 24 puzzles;
-- ids y numeración únicos para todos los niveles.
+- unicidad de los 48 puzzles.
