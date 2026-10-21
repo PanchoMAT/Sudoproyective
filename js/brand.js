@@ -39,25 +39,23 @@ function ensureCopyrightFooter() {
     ].join(';');
     document.body.appendChild(footer);
   }
-  const expected = `${BRAND_NAME} v${APP_VERSION} · ${COPYRIGHT_NOTICE}`;
-  if (footer.textContent !== expected) footer.textContent = expected;
+  const desired = `${BRAND_NAME} v${APP_VERSION} · ${COPYRIGHT_NOTICE}`;
+  if (footer.textContent !== desired) footer.textContent = desired;
 }
 
 function applyVisibleBrand() {
   if (typeof document === 'undefined') return;
 
-  const expectedTitle = `${BRAND_NAME} · v${APP_VERSION}`;
-  if (document.title !== expectedTitle) document.title = expectedTitle;
+  document.title = `${BRAND_NAME} · v${APP_VERSION}`;
 
   const heading = document.querySelector('.topbar h1');
-  if (heading && heading.textContent !== BRAND_NAME) heading.textContent = BRAND_NAME;
+  if (heading) heading.textContent = BRAND_NAME;
 
   const version = document.querySelector('.topbar .eyebrow');
-  if (version && version.textContent !== `Versión ${APP_VERSION}`) version.textContent = `Versión ${APP_VERSION}`;
+  if (version) version.textContent = `Versión ${APP_VERSION}`;
 
   const description = document.querySelector('meta[name="description"]');
-  const expectedDescription = `${BRAND_NAME} — puzzle matemático inspirado en geometría afín y proyectiva finita.`;
-  if (description && description.content !== expectedDescription) description.content = expectedDescription;
+  if (description) description.content = `${BRAND_NAME} — puzzle matemático inspirado en geometría afín y proyectiva finita.`;
 
   replaceTextNodes(document.body);
   ensureCopyrightFooter();
@@ -65,36 +63,4 @@ function applyVisibleBrand() {
 
 if (typeof document !== 'undefined') {
   applyVisibleBrand();
-
-  const observer = new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      if (mutation.type === 'characterData') {
-        replaceTextNodes(mutation.target);
-        continue;
-      }
-      if (mutation.type === 'attributes') {
-        if (mutation.target instanceof HTMLMetaElement && mutation.target.content.includes(LEGACY_BRAND_NAME)) {
-          mutation.target.content = replaceBrand(mutation.target.content);
-        }
-        continue;
-      }
-      mutation.addedNodes.forEach(replaceTextNodes);
-    }
-
-    const expectedTitle = `${BRAND_NAME} · v${APP_VERSION}`;
-    if (document.title !== expectedTitle) document.title = expectedTitle;
-    const heading = document.querySelector('.topbar h1');
-    if (heading && heading.textContent !== BRAND_NAME) heading.textContent = BRAND_NAME;
-    const version = document.querySelector('.topbar .eyebrow');
-    if (version && version.textContent !== `Versión ${APP_VERSION}`) version.textContent = `Versión ${APP_VERSION}`;
-    ensureCopyrightFooter();
-  });
-
-  observer.observe(document.documentElement, {
-    childList: true,
-    subtree: true,
-    characterData: true,
-    attributes: true,
-    attributeFilter: ['content'],
-  });
 }
