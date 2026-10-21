@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1018" />
   <meta name="description" content="Sudoproyective — puzzle matemático inspirado en geometría afín finita." />
-  <title>Sudoproyective · v0.3.1</title>
+  <title>Sudoproyective · v0.4.0</title>
   <link rel="stylesheet" href="styles.css" />
   <style>
     .cell.number-focus:not(.selected) {
@@ -20,15 +20,67 @@
       color: #e8f1ff;
       box-shadow: inset 0 0 0 1px rgba(114,167,255,.28);
     }
-    .world-section + .world-section { margin-top: 42px; }
+    .num-btn.number-complete {
+      position: relative;
+      border-color: rgba(89,214,148,.8);
+      background: rgba(89,214,148,.13);
+      color: #eafff3;
+    }
+    .num-btn.number-complete::after {
+      content: "✓";
+      position: absolute;
+      top: 2px;
+      right: 4px;
+      font-size: .7rem;
+      line-height: 1;
+      color: #8ff0ba;
+      font-weight: 900;
+    }
+    .route-selector-card { margin: 16px 0 22px; }
+    .route-selector-card > p { margin: 4px 0 12px; color: var(--muted); }
+    .route-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .route-tab {
+      min-width: 0;
+      border: 1px solid rgba(114,167,255,.22);
+      background: rgba(255,255,255,.035);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font: inherit;
+      cursor: pointer;
+    }
+    .route-tab span { font-weight: 800; white-space: nowrap; }
+    .route-tab small { color: var(--muted); white-space: nowrap; }
+    .route-tab.active {
+      border-color: rgba(114,167,255,.82);
+      background: rgba(114,167,255,.17);
+      box-shadow: inset 0 0 0 1px rgba(114,167,255,.16);
+    }
+    .invalid-count {
+      margin: 12px 0 2px;
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: #ffd5d5;
+    }
     .world-card { border-color: rgba(114,167,255,.24); }
+    @media (min-width: 680px) {
+      .route-tabs { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    }
   </style>
 </head>
 <body>
   <main class="app-shell">
     <header class="topbar">
       <div>
-        <p class="eyebrow">Prototipo v0.3.1</p>
+        <p class="eyebrow">Prototipo v0.4.0</p>
         <h1>Sudoproyective</h1>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
@@ -46,13 +98,19 @@
           <div>
             <p class="hero-kicker">Fila · columna · ruta</p>
             <h2>Tu recorrido</h2>
-            <p>Todos los niveles están disponibles desde el inicio. Las estrellas ya no abren contenido: ahora representan qué tan perfectamente dominas cada mundo.</p>
+            <p>Todos los niveles están disponibles desde el inicio. Elige una de las seis rutas del tablero 7×7 y perfecciona cada mundo con estrellas.</p>
           </div>
           <div class="progress-card">
             <span class="metric-label">Camino al platino</span>
-            <strong id="nextUnlockText">Perfección global · 0/72★</strong>
+            <strong id="nextUnlockText">Perfección global · 0/144★</strong>
             <div class="progress-track"><span id="unlockProgress"></span></div>
           </div>
+        </div>
+
+        <div class="info-card route-selector-card">
+          <strong>Elige la ruta</strong>
+          <p>Cambia de dirección sin recorrer una lista larga. Cada pestaña muestra sólo los niveles de esa ruta.</p>
+          <div id="routeTabs" class="route-tabs" role="tablist" aria-label="Selector de ruta"></div>
         </div>
 
         <div id="difficultySections"></div>
@@ -90,25 +148,29 @@
           <p>Durante los niveles normales puedes ocultar o mostrar la ruta seleccionada. La regla sigue existiendo aunque la ocultes.</p>
         </div>
         <div class="info-card">
-          <strong>Las rutas pueden cambiar de dirección</strong>
-          <p>En el Mundo 1 la ruta avanza una casilla vertical por cada columna. En el Mundo 2 avanza dos. La casilla seleccionada siempre te muestra la ruta correspondiente al nivel.</p>
+          <strong>Seis direcciones jugables</strong>
+          <p>En el tablero 7×7 puedes elegir Ruta +1, +2, +3, −3, −2 o −1. Son las seis pendientes diagonales no redundantes: la pendiente 0 ya coincide con las filas y la dirección vertical con las columnas.</p>
         </div>
         <div class="info-card">
           <strong>Sin corrección inmediata</strong>
-          <p>Desde el nivel 2, el juego no descarta números ni te dice si una jugada es correcta. Cuando llenes todo el tablero sólo te indicará si la solución completa es válida o no.</p>
+          <p>Desde el nivel 2, el juego no descarta números ni te dice si una jugada es correcta. Al llenar el tablero sólo informa cuántas casillas están incorrectas, sin revelar cuáles.</p>
+        </div>
+        <div class="info-card">
+          <strong>Pistas elegidas por ti</strong>
+          <p>Selecciona una casilla editable y luego pulsa Pista. Se revelará únicamente esa casilla y se gastará 1★ disponible.</p>
         </div>
         <div class="info-card">
           <strong>Estrellas, pistas y maestría</strong>
-          <p>Completar un nivel entrega 3★ sin pistas, 2★ usando una pista y 1★ usando dos o más. Todos los niveles están abiertos. Las estrellas históricas determinan tus trofeos de bronce, plata y oro en cada mundo; las estrellas disponibles pueden gastarse en pistas.</p>
+          <p>Completar un nivel entrega 3★ sin pistas, 2★ usando una pista y 1★ usando dos o más. Las estrellas históricas determinan bronce, plata y oro en cada ruta; las disponibles pueden gastarse en pistas.</p>
         </div>
       </div>
 
       <div id="rewardsPanel" class="tab-panel" data-panel="rewards">
         <div class="hero-card compact-hero">
           <div>
-            <p class="hero-kicker">Maestría por mundo</p>
+            <p class="hero-kicker">Maestría por ruta</p>
             <h2>Trofeos</h2>
-            <p>Cada mundo entrega bronce, plata y oro según sus estrellas. Si consigues oro en todos los mundos, obtienes el trofeo especial de platino.</p>
+            <p>Cada ruta entrega bronce, plata y oro según sus estrellas. Si consigues oro en las seis rutas, obtienes el trofeo especial de platino.</p>
           </div>
           <div class="reward-stats">
             <div><span>Total</span><strong id="totalStarsRewards">0★</strong></div>
@@ -187,19 +249,20 @@
     <div class="rules-cards">
       <article><span>1</span><div><strong>Completa con 1–7</strong><p>Llena todas las casillas vacías.</p></div></article>
       <article><span>2</span><div><strong>Sin repetir</strong><p>No repitas números en ninguna fila ni columna.</p></div></article>
-      <article><span>3</span><div><strong>Sigue la ruta</strong><p>Las siete casillas iluminadas de la ruta tampoco pueden repetir números.</p></div></article>
+      <article><span>3</span><div><strong>Sigue la ruta</strong><p>Las siete casillas iluminadas tampoco pueden repetir números.</p></div></article>
     </div>
     <div class="route-demo" aria-label="La ruta continúa por el borde opuesto">
       <span>↘</span><span>↘</span><span>↘</span><span>↘</span><span class="jump">⤴</span><span>↘</span><span>↘</span>
     </div>
-    <p style="color:var(--muted);line-height:1.5;margin-bottom:0;">Una ruta puede salir por un borde y continuar por el lado opuesto. En mundos posteriores la ruta puede avanzar con otra dirección, pero la regla siempre es la misma: sin repetir.</p>
+    <p style="color:var(--muted);line-height:1.5;margin-bottom:0;">La dirección de la ruta puede cambiar entre mundos, pero la regla siempre es la misma: fila, columna y ruta, sin repetir.</p>
   </dialog>
 
   <dialog id="invalidDialog" class="modal victory-modal">
     <div class="invalid-mark">×</div>
     <p class="eyebrow">Tablero completo</p>
     <h2>La solución todavía no es válida</h2>
-    <p>No te diremos dónde está el problema. Revisa filas, columnas y rutas y modifica las casillas que consideres necesarias.</p>
+    <p id="invalidErrorCount" class="invalid-count">Hay casillas incorrectas.</p>
+    <p>No te diremos cuáles. Revisa filas, columnas y rutas y modifica las casillas que consideres necesarias.</p>
     <form method="dialog">
       <button class="primary-btn" style="width:100%;margin-top:8px;">Seguir revisando</button>
     </form>
@@ -219,68 +282,5 @@
   </dialog>
 
   <script type="module" src="js/app.js"></script>
-  <script>
-    (() => {
-      let activeNumber = null;
-      let scheduled = false;
-
-      function applyNumberFocus() {
-        scheduled = false;
-        document.querySelectorAll('.cell').forEach((cell) => {
-          const isPlacedValue = !cell.querySelector('.notes-grid');
-          const value = Number(cell.textContent.trim());
-          cell.classList.toggle(
-            'number-focus',
-            activeNumber !== null && isPlacedValue && value === activeNumber
-          );
-        });
-
-        document.querySelectorAll('.num-btn').forEach((button) => {
-          const matches = activeNumber !== null && Number(button.textContent.trim()) === activeNumber;
-          button.classList.toggle('number-focus', matches);
-          button.setAttribute('aria-pressed', String(matches));
-        });
-      }
-
-      function scheduleNumberFocus() {
-        if (scheduled) return;
-        scheduled = true;
-        queueMicrotask(applyNumberFocus);
-      }
-
-      document.addEventListener('click', (event) => {
-        const button = event.target.closest('.num-btn');
-        if (button) {
-          const number = Number(button.textContent.trim());
-          if (Number.isInteger(number)) {
-            activeNumber = activeNumber === number ? null : number;
-            scheduleNumberFocus();
-          }
-          return;
-        }
-
-        const cell = event.target.closest('.cell');
-        if (cell) {
-          const isEmptyCell = Boolean(cell.querySelector('.notes-grid')) || cell.textContent.trim() === '';
-          if (isEmptyCell) {
-            activeNumber = null;
-            scheduleNumberFocus();
-          }
-          return;
-        }
-
-        if (event.target.closest('#backBtn, #levelsBtn, #nextLevelBtn, #tutorialBtn, .level-card')) {
-          activeNumber = null;
-          scheduleNumberFocus();
-        }
-      });
-
-      const observer = new MutationObserver(scheduleNumberFocus);
-      const board = document.getElementById('board');
-      const numbers = document.getElementById('numbers');
-      observer.observe(board, { childList: true, subtree: true, characterData: true });
-      observer.observe(numbers, { childList: true, subtree: true, characterData: true });
-    })();
-  </script>
 </body>
 </html>
