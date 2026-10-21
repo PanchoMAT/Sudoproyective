@@ -137,6 +137,19 @@ La URL con `?review=1` activa un modo de auditoría aislado del progreso real. P
 - lanzar la secuencia final completa;
 - mostrar la celebración y la credencial.
 
+## Aplicación instalable
+
+SudoProyectivo 1.0 funciona también como **Progressive Web App (PWA)**.
+
+La pestaña **Instalar** del juego permite:
+
+- iniciar la instalación directamente en navegadores Chromium cuando el sistema ofrece el diálogo de instalación;
+- mostrar instrucciones específicas en iPhone y iPad para usar **Añadir a pantalla de inicio**;
+- abrir SudoProyectivo desde un ícono propio y en modo `standalone` cuando el dispositivo lo soporta;
+- almacenar localmente los archivos principales mediante un service worker para permitir uso sin conexión después de una primera carga correcta.
+
+La versión instalable utiliza la misma aplicación web y la misma dirección pública; no es una bifurcación distinta del juego.
+
 ## Audio
 
 La versión 1.0 no incorpora narración hablada. Los textos y animaciones están preparados para que el audio pueda evaluarse más adelante.
@@ -147,7 +160,7 @@ La versión 1.0 no incorpora narración hablada. Los textos y animaciones están
 npm test
 ```
 
-Las pruebas verifican las seis geometrías, los 180 niveles de campaña, los seis Ultraexpertos, la estructura matemática de `PG(2,7)` y los elementos principales de las visualizaciones proyectivas. GitHub Actions ejecuta estas pruebas con los cambios en `main`.
+Las pruebas verifican las seis geometrías, los 180 niveles de campaña, los seis Ultraexpertos, la estructura matemática de `PG(2,7)`, los elementos principales de las visualizaciones proyectivas y la configuración PWA de instalación. GitHub Actions ejecuta estas pruebas con los cambios en `main`.
 
 ## Licencia
 
