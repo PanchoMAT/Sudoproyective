@@ -39,13 +39,15 @@ function ensureCopyrightFooter() {
     ].join(';');
     document.body.appendChild(footer);
   }
-  footer.textContent = `${BRAND_NAME} v${APP_VERSION} · ${COPYRIGHT_NOTICE}`;
+  const expected = `${BRAND_NAME} v${APP_VERSION} · ${COPYRIGHT_NOTICE}`;
+  if (footer.textContent !== expected) footer.textContent = expected;
 }
 
 function applyVisibleBrand() {
   if (typeof document === 'undefined') return;
 
-  document.title = `${BRAND_NAME} · v${APP_VERSION}`;
+  const expectedTitle = `${BRAND_NAME} · v${APP_VERSION}`;
+  if (document.title !== expectedTitle) document.title = expectedTitle;
 
   const heading = document.querySelector('.topbar h1');
   if (heading && heading.textContent !== BRAND_NAME) heading.textContent = BRAND_NAME;
@@ -54,7 +56,8 @@ function applyVisibleBrand() {
   if (version && version.textContent !== `Versión ${APP_VERSION}`) version.textContent = `Versión ${APP_VERSION}`;
 
   const description = document.querySelector('meta[name="description"]');
-  if (description) description.content = `${BRAND_NAME} — puzzle matemático inspirado en geometría afín y proyectiva finita.`;
+  const expectedDescription = `${BRAND_NAME} — puzzle matemático inspirado en geometría afín y proyectiva finita.`;
+  if (description && description.content !== expectedDescription) description.content = expectedDescription;
 
   replaceTextNodes(document.body);
   ensureCopyrightFooter();
@@ -78,7 +81,8 @@ if (typeof document !== 'undefined') {
       mutation.addedNodes.forEach(replaceTextNodes);
     }
 
-    if (document.title !== `${BRAND_NAME} · v${APP_VERSION}`) document.title = `${BRAND_NAME} · v${APP_VERSION}`;
+    const expectedTitle = `${BRAND_NAME} · v${APP_VERSION}`;
+    if (document.title !== expectedTitle) document.title = expectedTitle;
     const heading = document.querySelector('.topbar h1');
     if (heading && heading.textContent !== BRAND_NAME) heading.textContent = BRAND_NAME;
     const version = document.querySelector('.topbar .eyebrow');
