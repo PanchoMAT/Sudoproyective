@@ -1,0 +1,118 @@
+/* Proyecto final */
+.main-nav { grid-template-columns: repeat(5, 1fr) !important; }
+.nav-btn.project-locked { opacity: .56; }
+.project-lock-symbol { width: 76px; height: 76px; margin: 0 auto 16px; display: grid; place-items: center; border: 1px solid rgba(243,200,106,.35); border-radius: 24px; background: rgba(243,200,106,.08); font-size: 2rem; }
+.project-progress { margin-top: 18px; }
+.project-progress .progress-track span { background: var(--route); }
+.ultra-intro { border-color: rgba(243,200,106,.28); background: linear-gradient(145deg, rgba(243,200,106,.08), rgba(114,167,255,.04)), var(--panel); }
+.ultra-grid { display: grid; grid-template-columns: 1fr; gap: 9px; margin: 16px 0; }
+.ultra-card { width: 100%; display: grid; grid-template-columns: 38px 1fr auto; align-items: center; gap: 11px; border: 1px solid var(--line); border-radius: 16px; padding: 13px; background: var(--panel); color: var(--text); text-align: left; cursor: pointer; }
+.ultra-card.completed { border-color: rgba(112,225,193,.5); background: rgba(112,225,193,.05); }
+.ultra-status { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 11px; background: rgba(243,200,106,.10); color: var(--route); font-weight: 900; }
+.ultra-card.completed .ultra-status { background: var(--accent); color: #07120f; }
+.ultra-card strong, .ultra-card small { display: block; }
+.ultra-card small { margin-top: 3px; color: var(--muted); }
+.ultra-action { color: var(--accent); font-size: .78rem; font-weight: 850; }
+.project-final-gate { border-color: rgba(114,167,255,.24); position: relative; overflow: hidden; }
+.project-final-gate::after { content: "PG(2,7)"; position: absolute; right: -8px; bottom: -14px; color: rgba(114,167,255,.055); font-size: 3.6rem; font-weight: 950; letter-spacing: -.08em; pointer-events: none; }
+.project-final-gate.ready { border-color: rgba(243,200,106,.45); box-shadow: 0 0 34px rgba(243,200,106,.08); }
+.project-final-gate button:disabled { opacity: .48; cursor: not-allowed; }
+.math-equation { display: block; margin: 14px 0; padding: 13px; border-radius: 14px; background: rgba(0,0,0,.18); color: #e8eef7; text-align: center; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .94rem; }
+.direction-gallery { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin: 16px 0 22px; }
+.direction-family-card { min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: 16px; background: rgba(0,0,0,.12); opacity: 1; transform: none; }
+.direction-family-card strong, .direction-family-card small { display: block; text-align: center; }
+.direction-family-card small { color: var(--muted); margin-top: 2px; font-size: .72rem; }
+.family-svg { width: 100%; height: auto; overflow: visible; }
+.project-point { fill: rgba(220,231,246,.7); }
+.project-line { stroke: rgba(243,200,106,.68); stroke-width: 1.8; stroke-linecap: round; }
+.infinity-point { fill: var(--accent-2); filter: drop-shadow(0 0 4px rgba(114,167,255,.65)); }
+.animated-family .draw-line { stroke-dasharray: 180; stroke-dashoffset: 180; animation: routeDraw 1.1s ease forwards; }
+.construction-stage { padding: 20px; margin-bottom: 14px; border: 1px solid var(--line); border-radius: 20px; background: var(--panel); overflow: hidden; }
+.construction-stage h3 { margin: 0 0 7px; }
+.construction-stage p { color: var(--muted); line-height: 1.52; }
+.projective-construction.running .direction-family-card { opacity: 0; transform: translateY(12px); animation: familyArrive .6s ease forwards; animation-delay: var(--delay); }
+.plane-wrap { display: grid; grid-template-columns: 1fr; gap: 18px; align-items: center; }
+.final-plane-svg { width: min(100%, 360px); margin: 0 auto; display: block; }
+.plane-affine-point { fill: #dce7f6; opacity: .7; }
+.plane-infinity-point { fill: var(--accent-2); opacity: .18; transform-origin: center; }
+.plane-label { fill: var(--muted); font-size: 10px; opacity: .25; }
+.infinity-line { stroke: var(--route); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 230; stroke-dashoffset: 230; opacity: .2; }
+.projective-construction.running .plane-infinity-point { animation: pointReveal .55s ease forwards; }
+.projective-construction.running .plane-infinity-point.p-0 { animation-delay: 2.1s; }
+.projective-construction.running .plane-infinity-point.p-1 { animation-delay: 2.3s; }
+.projective-construction.running .plane-infinity-point.p-2 { animation-delay: 2.5s; }
+.projective-construction.running .plane-infinity-point.p-3 { animation-delay: 2.7s; }
+.projective-construction.running .plane-infinity-point.p-4 { animation-delay: 2.9s; }
+.projective-construction.running .plane-infinity-point.p-5 { animation-delay: 3.1s; }
+.projective-construction.running .plane-infinity-point.p-6 { animation-delay: 3.3s; }
+.projective-construction.running .plane-infinity-point.p-7 { animation-delay: 3.5s; }
+.projective-construction.running .plane-label { animation: labelReveal .5s ease 3.65s forwards; }
+.projective-construction.running .infinity-line { animation: infinityDraw 1.3s ease 4.05s forwards; }
+.plane-counts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.plane-counts div { padding: 12px; text-align: center; background: rgba(0,0,0,.14); border-radius: 14px; }
+.plane-counts strong { display: block; color: var(--route); font-size: 1.45rem; }
+.plane-counts span { color: var(--muted); font-size: .76rem; }
+.spotit-card { border-color: rgba(112,225,193,.35); background: linear-gradient(145deg, rgba(112,225,193,.08), rgba(243,200,106,.04)), var(--panel); }
+.spotit-card strong { color: var(--accent); }
+.projective-actions { display: grid; gap: 9px; margin: 18px 0 8px; }
+.projective-actions button:disabled { opacity: .55; }
+
+/* Ultraexperto */
+#ultraGameScreen { padding-bottom: 82px; }
+.ultra-tag { color: var(--route); font-size: .78rem; font-weight: 850; }
+.ultra-tools { grid-template-columns: repeat(2,1fr); }
+.ultra-number-pad { z-index: 35; }
+.ultra-family-graphic { width: min(100%, 310px); margin: 8px auto; }
+.ultra-family-graphic .project-line { stroke-width: 2.2; }
+
+/* Premio oculto */
+.secret-reward { margin-top: 18px; display: grid; grid-template-columns: 58px 1fr auto; gap: 13px; align-items: center; padding: 17px; border: 1px dashed rgba(243,200,106,.35); border-radius: 20px; background: rgba(243,200,106,.045); }
+.secret-reward.locked { opacity: .72; }
+.secret-reward.earned { border-style: solid; border-color: rgba(243,200,106,.55); box-shadow: 0 0 35px rgba(243,200,106,.07); }
+.secret-emblem { width: 54px; height: 54px; display: grid; place-items: center; border-radius: 18px; background: rgba(243,200,106,.11); color: var(--route); font-size: 1.7rem; font-weight: 950; }
+.secret-reward p { margin: 4px 0 0; color: var(--muted); font-size: .82rem; line-height: 1.4; }
+.secret-state { color: var(--route); font-weight: 900; letter-spacing: .14em; }
+.secret-open { align-self: center; }
+.credential-modal { width: min(calc(100% - 24px), 620px); padding: 14px; overflow: visible; }
+.credential-card { position: relative; overflow: hidden; padding: 28px 22px; border: 1px solid rgba(243,200,106,.6); border-radius: 24px; text-align: center; background: radial-gradient(circle at 50% 0%, rgba(243,200,106,.14), transparent 42%), linear-gradient(145deg,#101a29,#0c121c); }
+.credential-card::before, .credential-card::after { content: ""; position: absolute; width: 150px; height: 150px; border: 1px solid rgba(114,167,255,.11); border-radius: 50%; }
+.credential-card::before { left: -75px; top: -75px; }
+.credential-card::after { right: -75px; bottom: -75px; }
+.credential-seal { width: 92px; height: 92px; margin: 0 auto 16px; display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--route); box-shadow: 0 0 28px rgba(243,200,106,.18); color: var(--route); font-family: Georgia, serif; font-size: 1.18rem; font-weight: 900; animation: credentialGlow 2.4s ease-in-out infinite; }
+.credential-card h2 { margin-bottom: 3px; font-family: Georgia, serif; font-size: clamp(2rem,8vw,3rem); }
+.credential-subtitle { color: var(--route); font-weight: 900; font-size: 1.08rem; }
+.credential-copy { max-width: 46ch; margin: 17px auto; color: #d1dae7; line-height: 1.62; }
+.credential-community { margin-bottom: 4px; color: var(--accent); font-weight: 850; }
+.credential-status { color: var(--muted); font-size: .66rem; letter-spacing: .15em; font-weight: 900; }
+.credential-close { width: 100%; margin-top: 12px; }
+.sparkle { position: absolute; color: var(--route); animation: sparkle 2.6s ease-in-out infinite; pointer-events: none; }
+.sparkle.s1 { left: 10%; top: 17%; }
+.sparkle.s2 { right: 12%; top: 25%; animation-delay: .6s; }
+.sparkle.s3 { left: 16%; bottom: 18%; animation-delay: 1.2s; }
+.sparkle.s4 { right: 13%; bottom: 14%; animation-delay: 1.8s; }
+
+@keyframes routeDraw { to { stroke-dashoffset: 0; } }
+@keyframes familyArrive { to { opacity: 1; transform: translateY(0); } }
+@keyframes pointReveal { to { opacity: 1; transform: scale(1.12); } }
+@keyframes labelReveal { to { opacity: 1; } }
+@keyframes infinityDraw { to { stroke-dashoffset: 0; opacity: 1; } }
+@keyframes credentialGlow { 0%,100% { transform: scale(1); box-shadow: 0 0 20px rgba(243,200,106,.15); } 50% { transform: scale(1.035); box-shadow: 0 0 38px rgba(243,200,106,.32); } }
+@keyframes sparkle { 0%,100% { opacity: .2; transform: scale(.7) rotate(0); } 50% { opacity: 1; transform: scale(1.2) rotate(45deg); } }
+
+@media (min-width: 620px) {
+  .ultra-grid { grid-template-columns: repeat(2,1fr); }
+  .direction-gallery { grid-template-columns: repeat(4,1fr); }
+  .plane-wrap { grid-template-columns: 1fr 1fr; }
+}
+@media (min-width: 680px) { .route-tabs { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+@media (max-width: 480px) {
+  .main-nav { padding-left: 5px; padding-right: 5px; }
+  .nav-btn { font-size: .61rem; }
+  .secret-reward { grid-template-columns: 50px 1fr; }
+  .secret-open, .secret-state { grid-column: 2; justify-self: start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animated-family .draw-line, .projective-construction.running .direction-family-card,
+  .projective-construction.running .plane-infinity-point, .projective-construction.running .plane-label,
+  .projective-construction.running .infinity-line, .credential-seal, .sparkle { animation-duration: .01ms !important; animation-delay: 0ms !important; }
+}
