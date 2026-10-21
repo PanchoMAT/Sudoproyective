@@ -29,6 +29,7 @@ function countSolutions(grid, slopes, limit = 2) {
       if (!bestCandidates || cands.length < bestCandidates.length) {
         best = { row, col };
         bestCandidates = cands;
+        if (cands.length === 1) break;
       }
     }
     if (!best) {
@@ -47,21 +48,25 @@ function countSolutions(grid, slopes, limit = 2) {
   return count;
 }
 
-assert.equal(LEVELS.length, 24, 'La v0.3 debe contener 24 niveles');
-assert.equal(WORLDS.length, 2, 'La v0.3 debe contener dos mundos');
+assert.equal(LEVELS.length, 48, 'La v0.4 debe contener 48 niveles');
+assert.equal(WORLDS.length, 6, 'La v0.4 debe contener las seis rutas no redundantes');
 assert.equal(LEVELS.filter((l) => l.slope === 1).length, 18);
-assert.equal(LEVELS.filter((l) => l.slope === 2).length, 6);
-assert.equal(new Set(LEVELS.map((level) => level.id)).size, LEVELS.length, 'Los ids de nivel deben ser únicos');
-assert.equal(new Set(LEVELS.map((level) => level.number)).size, LEVELS.length, 'Los números de nivel deben ser únicos');
+for (const slope of [2,3,4,5,6]) {
+  assert.equal(LEVELS.filter((l) => l.slope === slope).length, 6, `Ruta ${slope}: seis niveles`);
+}
+assert.equal(new Set(LEVELS.map((level) => level.id)).size, LEVELS.length, 'Los ids deben ser únicos');
+assert.equal(new Set(LEVELS.map((level) => level.number)).size, LEVELS.length, 'La numeración debe ser única');
 
 for (const world of WORLDS) {
-  assert.ok(LEVELS.some((level) => level.world === world.id), `El mundo ${world.id} debe contener niveles`);
+  assert.equal(world.id, world.slope);
+  assert.ok([1,2,3,4,5,6].includes(world.slope));
 }
 
 for (const level of LEVELS) {
   const system = makeConstraintSystem(level.slopes);
   assert.equal(level.puzzle.length, 7);
   assert.equal(level.solution.length, 7);
+  assert.deepEqual(level.slopes, [level.slope]);
 
   for (const row of level.puzzle) assert.equal(row.length, 7);
   for (const row of level.solution) assert.equal(row.length, 7);
