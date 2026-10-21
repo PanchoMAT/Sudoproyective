@@ -130,4 +130,4 @@ La v0.8 no incorpora narración hablada. Los subtítulos y animaciones están pr
 npm test
 ```
 
-Las pruebas verifican las seis geometrías, los 180 niveles de campaña, los seis Ultraexpertos, la estructura matemática de `PG(2,7)` y los elementos estructurales de las nuevas visualizaciones proyectivas.
+Las pruebas verifican las seis geometrías, los 180 niveles de campaña, los seis Ultraexpertos, la estructura matemática de `PG(2,7)` y los elementos estructurales de las nuevas visualizaciones proyectivas. El repositorio ejecuta estas pruebas automáticamente en GitHub Actions con cada cambio en `main`.
