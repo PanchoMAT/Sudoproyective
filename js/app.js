@@ -16,7 +16,11 @@ const systemCache = new Map();
 
 // Se conserva la clave histórica para mantener todo el progreso existente.
 const STORAGE_KEY = 'sudoproyective-v02';
-const HINT_COST = 1;
+const HINT_COSTS = Object.freeze({
+  'Fácil': 2,
+  'Intermedio': 3,
+  'Difícil': 4,
+});
 
 function levelsForWorld(worldId) {
   return LEVELS.filter((item) => item.world === worldId);
@@ -40,24 +44,24 @@ const TROPHIES = [
       {
         id: `world-${world.id}-bronze`,
         icon: '🥉',
-        name: `${world.name} · Bronce`,
-        text: `Consigue ${levelCount}★ en ${world.name}.`,
+        name: `${worldDisplayName(world)} · Bronce`,
+        text: `Consigue ${levelCount}★ en ${worldDisplayName(world)}.`,
         world: world.id,
         threshold: levelCount,
       },
       {
         id: `world-${world.id}-silver`,
         icon: '🥈',
-        name: `${world.name} · Plata`,
-        text: `Consigue ${levelCount * 2}★ en ${world.name}.`,
+        name: `${worldDisplayName(world)} · Plata`,
+        text: `Consigue ${levelCount * 2}★ en ${worldDisplayName(world)}.`,
         world: world.id,
         threshold: levelCount * 2,
       },
       {
         id: `world-${world.id}-gold`,
         icon: '🥇',
-        name: `${world.name} · Oro`,
-        text: `Consigue las ${levelCount * 3}★ de ${world.name}.`,
+        name: `${worldDisplayName(world)} · Oro`,
+        text: `Consigue las ${levelCount * 3}★ de ${worldDisplayName(world)}.`,
         world: world.id,
         threshold: levelCount * 3,
       },
@@ -150,11 +154,17 @@ function worldFor(item = level()) {
 function firstLevelHelp() {
   if (state.isTutorial) return true;
   const item = level();
-  return item.number === 1 && !state.saved.bestStars[item.id];
+  return item.world === 1 && item.localNumber === 1 && !state.saved.bestStars[item.id];
 }
-function stepLabel(slope) {
-  const step = signedStepForSlope(slope);
-  return step > 0 ? `+${step}` : `${step}`;
+function hintCostFor(item = level()) {
+  return HINT_COSTS[item.difficulty] || 2;
+}
+function stepLabel(slope) { return String(slope); }
+function worldDisplayName(world) { return `Ruta ${world.slope}`; }
+function displayLevelNumber(item) {
+  const levels = levelsForWorld(item.world);
+  const index = levels.findIndex((candidate) => candidate.id === item.id);
+  return index >= 0 ? index + 1 : item.number;
 }
 function stepSentence(slope) {
   const step = signedStepForSlope(slope);
@@ -245,7 +255,7 @@ function renderRouteTabs() {
     button.className = `route-tab ${state.activeWorldId === world.id ? 'active' : ''}`;
     button.setAttribute('role', 'tab');
     button.setAttribute('aria-selected', String(state.activeWorldId === world.id));
-    button.innerHTML = `<span>${world.name}</span><small>${worldMedalIcon(world.id) || `${worldStarTotal(world.id)}★`}</small>`;
+    button.innerHTML = `<span>${worldDisplayName(world)}</span><small>${worldMedalIcon(world.id) || `${worldStarTotal(world.id)}★`}</small>`;
     button.addEventListener('click', () => selectWorld(world.id));
     routeTabsEl.appendChild(button);
   });
@@ -259,43 +269,25 @@ function renderLevels() {
 
   const worldSection = document.createElement('section');
   worldSection.className = 'world-section';
-  const earned = worldStarTotal(world.id);
-  const count = worldLevels.length;
-  worldSection.innerHTML = `
-    <div class="info-card world-card">
-      <div class="section-heading difficulty-heading">
-        <div>
-          <p class="eyebrow">${world.kicker}</p>
-          <h2>${world.name}</h2>
-        </div>
-        <span class="group-stars">${earned}/${count * 3}★</span>
-      </div>
-      <p>${world.description}</p>
-      <p><strong>Rango actual:</strong> ${worldMedal(world.id)} · 🥉 ${count}★ · 🥈 ${count * 2}★ · 🥇 ${count * 3}★</p>
-    </div>
-    <div class="world-groups"></div>
-  `;
 
-  const groupsRoot = worldSection.querySelector('.world-groups');
   for (const difficulty of world.groups) {
     const group = worldLevels.filter((item) => item.difficulty === difficulty);
     if (!group.length) continue;
+
     const section = document.createElement('section');
-    section.className = 'difficulty-section';
+    section.className = 'difficulty-section level-list-section';
     const groupEarned = group.reduce((sum, item) => sum + (state.saved.bestStars[item.id] || 0), 0);
     section.innerHTML = `
-      <div class="section-heading difficulty-heading">
-        <div>
-          <p class="eyebrow">${difficulty}</p>
-          <h2>${groupTitle(difficulty)}</h2>
-        </div>
+      <div class="section-heading difficulty-heading simple-difficulty-heading">
+        <h2>${difficulty}</h2>
         <span class="group-stars">${groupEarned}/${group.length * 3}★</span>
       </div>
-      <div class="level-grid"></div>
+      <div class="level-list"></div>
     `;
-    const grid = section.querySelector('.level-grid');
-    group.forEach((item) => grid.appendChild(makeLevelCard(item)));
-    groupsRoot.appendChild(section);
+
+    const list = section.querySelector('.level-list');
+    group.forEach((item) => list.appendChild(makeLevelCard(item)));
+    worldSection.appendChild(section);
   }
 
   difficultySections.appendChild(worldSection);
@@ -303,16 +295,16 @@ function renderLevels() {
 
 function makeLevelCard(item) {
   const best = state.saved.bestStars[item.id] || 0;
+  const passed = best > 0;
   const button = document.createElement('button');
-  button.className = `level-card ${best ? 'completed' : ''}`;
-  const routeLabel = `Ruta ${stepLabel(item.slope)} · ${item.subtitle}`;
+  button.className = `level-row ${passed ? 'completed' : ''}`;
+  button.setAttribute('aria-label', `Nivel ${displayLevelNumber(item)}: ${passed ? `completado con ${best} estrellas` : 'pendiente'}`);
   button.innerHTML = `
-    <span class="level-number">Nivel ${item.number}</span>
-    <span class="level-name">${item.name}</span>
-    <span class="level-clues">${routeLabel}</span>
-    <span class="card-stars" aria-label="${best} estrellas">${starString(best)}</span>
+    <span class="level-row-status" aria-hidden="true">${passed ? '✓' : '○'}</span>
+    <span class="level-row-label">Nivel ${displayLevelNumber(item)}</span>
+    <span class="level-row-stars" aria-hidden="true">${starString(best)}</span>
   `;
-  button.addEventListener('click', () => startLevel(item.number - 1, false));
+  button.addEventListener('click', () => startLevel(LEVELS.indexOf(item), false));
   return button;
 }
 
@@ -397,13 +389,14 @@ function startLevel(index, tutorial = false) {
   $('#routesBtn').innerHTML = 'Rutas <span>●</span>';
   $('#routesBtn').classList.toggle('hidden', tutorial);
   $('#hintBtn').classList.toggle('hidden', tutorial);
+  $('#hintBtn').textContent = `Pista · ${hintCostFor(item)}★`;
   $('#gameStarsBalance').classList.toggle('hidden', tutorial);
 
   const world = worldFor(item);
   $('#gameMeta').textContent = tutorial
     ? 'Tutorial opcional'
-    : `Nivel ${item.number} · ${world.name} · ${item.difficulty}`;
-  $('#gameTitle').textContent = tutorial ? 'Aprende las rutas' : item.name;
+    : `${worldDisplayName(world)} · ${item.difficulty}`;
+  $('#gameTitle').textContent = tutorial ? 'Aprende las rutas' : `Nivel ${displayLevelNumber(item)}`;
 
   hubScreen.classList.remove('active');
   gameScreen.classList.add('active');
@@ -729,12 +722,13 @@ function requestHint() {
     return;
   }
 
-  if (state.saved.availableStars < HINT_COST) {
-    showToast(`Necesitas ${HINT_COST}★ disponible para usar una pista.`);
+  const hintCost = hintCostFor(item);
+  if (state.saved.availableStars < hintCost) {
+    showToast(`Necesitas ${hintCost}★ disponibles para usar una pista.`);
     return;
   }
 
-  state.saved.availableStars -= HINT_COST;
+  state.saved.availableStars -= hintCost;
   state.values[row][col] = item.solution[row][col];
   state.notes.delete(cellKey(row, col));
   state.hints++;
@@ -796,6 +790,13 @@ function checkCompletion() {
   completeLevel();
 }
 
+function nextLevelInCurrentRoute() {
+  const item = level();
+  const levels = levelsForWorld(item.world);
+  const position = levels.findIndex((candidate) => candidate.id === item.id);
+  return position >= 0 ? levels[position + 1] || null : null;
+}
+
 function completeLevel() {
   stopTimer();
   if (state.isTutorial) {
@@ -838,7 +839,7 @@ function completeLevel() {
   if (newTrophy) rewardParts.push(`${newTrophy.icon} Nuevo trofeo: ${newTrophy.name}`);
   $('#victoryReward').textContent = rewardParts.join(' · ');
 
-  const next = LEVELS[state.levelIndex + 1];
+  const next = nextLevelInCurrentRoute();
   $('#nextLevelBtn').style.display = next ? '' : 'none';
   victoryDialog.showModal();
   renderHub();
@@ -963,8 +964,10 @@ $('#levelsBtn').addEventListener('click', () => {
   setTab('levels');
 });
 $('#nextLevelBtn').addEventListener('click', () => {
+  const next = nextLevelInCurrentRoute();
+  if (!next) return;
   victoryDialog.close();
-  startLevel(state.levelIndex + 1, false);
+  startLevel(LEVELS.indexOf(next), false);
 });
 $('#resetProgressBtn').addEventListener('click', () => {
   if (!confirm('¿Borrar niveles, estrellas, pistas gastadas y trofeos de Sudoproyective?')) return;
