@@ -1,0 +1,87 @@
+.main-nav { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+.install-hero {
+  position: relative;
+  overflow: hidden;
+}
+.install-hero::after {
+  content: "";
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  right: -70px;
+  top: -70px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(243,200,106,.18), transparent 68%);
+  pointer-events: none;
+}
+.install-brand-row {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 18px;
+  align-items: center;
+}
+.install-app-icon {
+  width: 92px;
+  height: 92px;
+  border-radius: 24px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.34);
+}
+.install-status {
+  margin: 18px 0 14px;
+  padding: 13px 15px;
+  border: 1px solid rgba(112,225,193,.28);
+  border-radius: 15px;
+  background: rgba(112,225,193,.07);
+  color: #dff9ef;
+  line-height: 1.48;
+}
+.install-status.waiting {
+  border-color: rgba(243,200,106,.28);
+  background: rgba(243,200,106,.07);
+  color: #f8ebc7;
+}
+.install-status.installed {
+  border-color: rgba(112,225,193,.55);
+  background: rgba(112,225,193,.13);
+}
+#installAppBtn {
+  width: 100%;
+  margin-top: 4px;
+  font-size: 1rem;
+}
+#installAppBtn:disabled { opacity: .55; cursor: default; }
+.install-benefits {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.install-benefit {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 11px;
+  align-items: start;
+  padding: 13px;
+  border-radius: 14px;
+  background: rgba(0,0,0,.16);
+}
+.install-benefit > span {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: rgba(114,167,255,.12);
+  color: #cfe0ff;
+  font-size: 1.15rem;
+}
+.install-benefit p { margin: 3px 0 0; color: var(--muted); font-size: .88rem; line-height: 1.45; }
+.install-steps { margin: 10px 0 0; padding-left: 22px; color: #c2cedd; line-height: 1.65; }
+.install-small-note { color: var(--muted); font-size: .78rem; line-height: 1.5; margin-top: 12px; }
+
+@media (max-width: 520px) {
+  .nav-btn { font-size: .62rem; }
+  .nav-btn span { font-size: .94rem; }
+  .install-brand-row { grid-template-columns: 72px 1fr; gap: 13px; }
+  .install-app-icon { width: 72px; height: 72px; border-radius: 19px; }
+}
