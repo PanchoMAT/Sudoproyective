@@ -7,13 +7,14 @@ const hubScreen = $('#hubScreen');
 const gameScreen = $('#gameScreen');
 const mainNav = $('#mainNav');
 const difficultySections = $('#difficultySections');
+const routeTabsEl = $('#routeTabs');
 const victoryDialog = $('#victoryDialog');
 const invalidDialog = $('#invalidDialog');
 const tutorialCallout = $('#tutorialCallout');
 const directionCallout = $('#directionCallout');
 const systemCache = new Map();
 
-// Conservamos la clave v0.2 para no perder el progreso ya guardado.
+// Se conserva la clave histórica para mantener todo el progreso existente.
 const STORAGE_KEY = 'sudoproyective-v02';
 const HINT_COST = 1;
 
@@ -66,7 +67,7 @@ const TROPHIES = [
     id: 'platinum',
     icon: '🏆',
     name: 'Trofeo de Platino',
-    text: 'Consigue el trofeo de oro en todos los mundos.',
+    text: 'Consigue el trofeo de oro en las seis rutas.',
     platinum: true,
   },
 ];
@@ -85,13 +86,26 @@ const state = {
   tutorialStep: -1,
   isTutorial: false,
   activeTab: 'levels',
+  activeWorldId: 1,
+  numberFocus: null,
   undoStack: [],
   redoStack: [],
   saved: loadSaved(),
 };
 
+state.activeWorldId = WORLDS.some((world) => world.id === Number(state.saved.selectedWorldId))
+  ? Number(state.saved.selectedWorldId)
+  : WORLDS[0].id;
+
 function freshSave() {
-  return { levels: {}, bestStars: {}, availableStars: 0, trophies: {}, seenDirections: {} };
+  return {
+    levels: {},
+    bestStars: {},
+    availableStars: 0,
+    trophies: {},
+    seenDirections: {},
+    selectedWorldId: 1,
+  };
 }
 
 function loadSaved() {
@@ -123,17 +137,30 @@ function level() { return LEVELS[state.levelIndex]; }
 function isGiven(row, col) { return level().puzzle[row][col] !== 0; }
 function slopesFor(item = level()) { return item.slopes?.length ? item.slopes : [item.slope || 1]; }
 function activeSlope(item = level()) { return slopesFor(item)[0]; }
+function signedStepForSlope(slope) { return slope <= 3 ? slope : slope - SIZE; }
 function constraintSystem(item = level()) {
   const slopes = slopesFor(item);
   const key = slopes.join(',');
   if (!systemCache.has(key)) systemCache.set(key, makeConstraintSystem(slopes));
   return systemCache.get(key);
 }
-function worldFor(item = level()) { return WORLDS.find((world) => world.id === item.world) || WORLDS[0]; }
+function worldFor(item = level()) {
+  return WORLDS.find((world) => world.id === item.world) || WORLDS[0];
+}
 function firstLevelHelp() {
   if (state.isTutorial) return true;
   const item = level();
   return item.number === 1 && !state.saved.bestStars[item.id];
+}
+function stepLabel(slope) {
+  const step = signedStepForSlope(slope);
+  return step > 0 ? `+${step}` : `${step}`;
+}
+function stepSentence(slope) {
+  const step = signedStepForSlope(slope);
+  return step > 0
+    ? `baja ${step} ${step === 1 ? 'casilla' : 'casillas'}`
+    : `sube ${Math.abs(step)} ${Math.abs(step) === 1 ? 'casilla' : 'casillas'}`;
 }
 
 function setTab(tab) {
@@ -147,8 +174,17 @@ function setTab(tab) {
   renderHub();
 }
 
+function selectWorld(worldId) {
+  state.activeWorldId = worldId;
+  state.saved.selectedWorldId = worldId;
+  persist();
+  renderRouteTabs();
+  renderLevels();
+}
+
 function renderHub() {
   renderStarSummaries();
+  renderRouteTabs();
   renderLevels();
   renderTrophies();
   renderMasteryProgress();
@@ -176,8 +212,8 @@ function groupTitle(difficulty) {
     'Iniciación': 'Aprender la estructura',
     'Intermedio': 'Cruzar información',
     'Avanzado': 'Leer la geometría',
-    'Exploración': 'Descubrir el salto',
-    'Dominio': 'Leer la nueva dirección',
+    'Exploración': 'Descubrir la dirección',
+    'Dominio': 'Leer la nueva ruta',
     'Desafío': 'Resolver con menos señales',
   };
   return labels[difficulty] || difficulty;
@@ -192,62 +228,84 @@ function worldMedal(worldId) {
   return 'Sin trofeo';
 }
 
+function worldMedalIcon(worldId) {
+  const stars = worldStarTotal(worldId);
+  const levels = levelsForWorld(worldId).length;
+  if (stars >= levels * 3) return '🥇';
+  if (stars >= levels * 2) return '🥈';
+  if (stars >= levels) return '🥉';
+  return '';
+}
+
+function renderRouteTabs() {
+  routeTabsEl.innerHTML = '';
+  WORLDS.forEach((world) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `route-tab ${state.activeWorldId === world.id ? 'active' : ''}`;
+    button.setAttribute('role', 'tab');
+    button.setAttribute('aria-selected', String(state.activeWorldId === world.id));
+    button.innerHTML = `<span>${world.name}</span><small>${worldMedalIcon(world.id) || `${worldStarTotal(world.id)}★`}</small>`;
+    button.addEventListener('click', () => selectWorld(world.id));
+    routeTabsEl.appendChild(button);
+  });
+}
+
 function renderLevels() {
   difficultySections.innerHTML = '';
+  const world = WORLDS.find((item) => item.id === state.activeWorldId) || WORLDS[0];
+  const worldLevels = levelsForWorld(world.id);
+  if (!worldLevels.length) return;
 
-  for (const world of WORLDS) {
-    const worldLevels = levelsForWorld(world.id);
-    if (!worldLevels.length) continue;
-
-    const worldSection = document.createElement('section');
-    worldSection.className = 'world-section';
-    const earned = worldStarTotal(world.id);
-    const count = worldLevels.length;
-    worldSection.innerHTML = `
-      <div class="info-card world-card">
-        <div class="section-heading difficulty-heading">
-          <div>
-            <p class="eyebrow">${world.kicker}</p>
-            <h2>${world.name}</h2>
-          </div>
-          <span class="group-stars">${earned}/${count * 3}★</span>
+  const worldSection = document.createElement('section');
+  worldSection.className = 'world-section';
+  const earned = worldStarTotal(world.id);
+  const count = worldLevels.length;
+  worldSection.innerHTML = `
+    <div class="info-card world-card">
+      <div class="section-heading difficulty-heading">
+        <div>
+          <p class="eyebrow">${world.kicker}</p>
+          <h2>${world.name}</h2>
         </div>
-        <p>${world.description}</p>
-        <p><strong>Rango actual:</strong> ${worldMedal(world.id)} · 🥉 ${count}★ · 🥈 ${count * 2}★ · 🥇 ${count * 3}★</p>
+        <span class="group-stars">${earned}/${count * 3}★</span>
       </div>
-      <div class="world-groups"></div>
-    `;
+      <p>${world.description}</p>
+      <p><strong>Rango actual:</strong> ${worldMedal(world.id)} · 🥉 ${count}★ · 🥈 ${count * 2}★ · 🥇 ${count * 3}★</p>
+    </div>
+    <div class="world-groups"></div>
+  `;
 
-    const groupsRoot = worldSection.querySelector('.world-groups');
-    for (const difficulty of world.groups) {
-      const group = worldLevels.filter((item) => item.difficulty === difficulty);
-      if (!group.length) continue;
-      const section = document.createElement('section');
-      section.className = 'difficulty-section';
-      const groupEarned = group.reduce((sum, item) => sum + (state.saved.bestStars[item.id] || 0), 0);
-      section.innerHTML = `
-        <div class="section-heading difficulty-heading">
-          <div>
-            <p class="eyebrow">${difficulty}</p>
-            <h2>${groupTitle(difficulty)}</h2>
-          </div>
-          <span class="group-stars">${groupEarned}/${group.length * 3}★</span>
+  const groupsRoot = worldSection.querySelector('.world-groups');
+  for (const difficulty of world.groups) {
+    const group = worldLevels.filter((item) => item.difficulty === difficulty);
+    if (!group.length) continue;
+    const section = document.createElement('section');
+    section.className = 'difficulty-section';
+    const groupEarned = group.reduce((sum, item) => sum + (state.saved.bestStars[item.id] || 0), 0);
+    section.innerHTML = `
+      <div class="section-heading difficulty-heading">
+        <div>
+          <p class="eyebrow">${difficulty}</p>
+          <h2>${groupTitle(difficulty)}</h2>
         </div>
-        <div class="level-grid"></div>
-      `;
-      const grid = section.querySelector('.level-grid');
-      group.forEach((item) => grid.appendChild(makeLevelCard(item)));
-      groupsRoot.appendChild(section);
-    }
-    difficultySections.appendChild(worldSection);
+        <span class="group-stars">${groupEarned}/${group.length * 3}★</span>
+      </div>
+      <div class="level-grid"></div>
+    `;
+    const grid = section.querySelector('.level-grid');
+    group.forEach((item) => grid.appendChild(makeLevelCard(item)));
+    groupsRoot.appendChild(section);
   }
+
+  difficultySections.appendChild(worldSection);
 }
 
 function makeLevelCard(item) {
   const best = state.saved.bestStars[item.id] || 0;
   const button = document.createElement('button');
   button.className = `level-card ${best ? 'completed' : ''}`;
-  const routeLabel = item.slope === 1 ? item.subtitle : `Ruta salto ${item.slope} · ${item.subtitle}`;
+  const routeLabel = `Ruta ${stepLabel(item.slope)} · ${item.subtitle}`;
   button.innerHTML = `
     <span class="level-number">Nivel ${item.number}</span>
     <span class="level-name">${item.name}</span>
@@ -294,8 +352,9 @@ function updateDirectionCallout() {
   const shouldShow = !state.isTutorial && slope !== 1 && !state.saved.seenDirections[String(slope)];
   directionCallout.classList.toggle('hidden', !shouldShow);
   if (!shouldShow) return;
-  $('#directionTitle').textContent = `Nueva ruta · salto ${slope}`;
-  $('#directionText').textContent = `Al avanzar una columna, la ruta baja ${slope} casillas. Si sale del tablero, continúa por el borde opuesto.`;
+  $('#directionTitle').textContent = `Nueva ruta · ${stepLabel(slope)}`;
+  $('#directionText').textContent =
+    `Al avanzar una columna, la ruta ${stepSentence(slope)}. Si sale del tablero, continúa por el borde opuesto.`;
 }
 
 function dismissDirectionCallout() {
@@ -307,10 +366,17 @@ function dismissDirectionCallout() {
 
 function startLevel(index, tutorial = false) {
   const item = LEVELS[index];
-
   state.levelIndex = index;
   state.isTutorial = tutorial;
-  const savedLevel = tutorial ? null : state.saved.levels[item.id];
+  state.numberFocus = null;
+
+  if (!tutorial) {
+    state.activeWorldId = item.world;
+    state.saved.selectedWorldId = item.world;
+  }
+
+  // Un nivel ya terminado comienza de nuevo al reabrirlo para que pueda mejorarse su marca.
+  const savedLevel = tutorial || state.saved.bestStars[item.id] ? null : state.saved.levels[item.id];
   state.values = savedLevel?.values ? cloneGrid(savedLevel.values) : cloneGrid(item.puzzle);
   state.notes = tutorial ? new Map() : new Map(
     Object.entries(savedLevel?.notes || {}).map(([key, value]) => [key, new Set(value)])
@@ -348,12 +414,14 @@ function startLevel(index, tutorial = false) {
   updateHistoryButtons();
   updateTutorial();
   updateDirectionCallout();
+  persist();
   startTimer();
 }
 
 function leaveGame() {
   saveCurrent();
   stopTimer();
+  state.numberFocus = null;
   if (invalidDialog?.open) invalidDialog.close();
   gameScreen.classList.remove('active');
   hubScreen.classList.add('active');
@@ -400,6 +468,8 @@ function makeNotes(notes) {
 }
 
 function selectCell(row, col) {
+  // Cualquier toque en el tablero apaga el seguimiento numérico previo.
+  state.numberFocus = null;
   state.selected = { row, col };
   paintSelection();
   renderNumberPad();
@@ -411,34 +481,46 @@ function selectCell(row, col) {
 
 function paintSelection() {
   document.querySelectorAll('.cell').forEach((cell) => {
-    cell.classList.remove('selected', 'peer', 'route-peer', 'same-value', 'error');
+    cell.classList.remove('selected', 'peer', 'route-peer', 'same-value', 'error', 'number-focus');
     cell.querySelectorAll('.wrap-dot').forEach((dot) => dot.remove());
   });
-  if (!state.selected) return;
 
-  const { row, col } = state.selected;
-  const selectedKey = cellKey(row, col);
-  const selectedValue = state.values[row][col];
-  const slope = activeSlope();
-  const routeKeys = new Set(routeCellsFor(row, col, slope).map((cell) => cellKey(cell.row, cell.col)));
+  const selected = state.selected;
+  let routeKeys = new Set();
+  if (selected) {
+    routeKeys = new Set(
+      routeCellsFor(selected.row, selected.col, activeSlope())
+        .map((cell) => cellKey(cell.row, cell.col))
+    );
+  }
 
   document.querySelectorAll('.cell').forEach((cell) => {
-    const r = Number(cell.dataset.row);
-    const c = Number(cell.dataset.col);
-    const key = cellKey(r, c);
+    const row = Number(cell.dataset.row);
+    const col = Number(cell.dataset.col);
+    const key = cellKey(row, col);
+    const value = state.values[row][col];
+
+    if (state.numberFocus !== null && value === state.numberFocus) {
+      cell.classList.add('number-focus');
+    }
+
+    if (!selected) return;
+    const selectedKey = cellKey(selected.row, selected.col);
     if (key === selectedKey) cell.classList.add('selected');
-    else if (r === row || c === col) cell.classList.add('peer');
+    else if (row === selected.row || col === selected.col) cell.classList.add('peer');
     if (state.routesVisible && key !== selectedKey && routeKeys.has(key)) cell.classList.add('route-peer');
-    if (firstLevelHelp() && selectedValue && state.values[r][c] === selectedValue) cell.classList.add('same-value');
+
+    const selectedValue = state.values[selected.row][selected.col];
+    if (firstLevelHelp() && selectedValue && value === selectedValue) cell.classList.add('same-value');
   });
 
-  if (state.routesVisible) addWrapMarkers(row, col, slope);
+  if (selected && state.routesVisible) addWrapMarkers(selected.row, selected.col, activeSlope());
 }
 
 function addWrapMarkers(row, col, slope) {
   const route = routeCellsFor(row, col, slope);
   const sorted = [...route].sort((a, b) => a.col - b.col);
-  const signedStep = slope <= Math.floor(SIZE / 2) ? slope : slope - SIZE;
+  const signedStep = signedStepForSlope(slope);
 
   for (let i = 0; i < sorted.length - 1; i++) {
     const a = sorted[i];
@@ -468,10 +550,19 @@ function cellElement(row, col) {
   return boardEl.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
 }
 
+function numberCounts() {
+  const counts = new Map(SYMBOLS.map((n) => [n, 0]));
+  state.values.forEach((row) => row.forEach((value) => {
+    if (counts.has(value)) counts.set(value, counts.get(value) + 1);
+  }));
+  return counts;
+}
+
 function renderNumberPad() {
   const numbers = $('#numbers');
   numbers.innerHTML = '';
   const used = new Set();
+  const counts = numberCounts();
 
   if (firstLevelHelp() && state.selected) {
     constraintSystem().peers.get(cellKey(state.selected.row, state.selected.col))?.forEach((key) => {
@@ -481,12 +572,32 @@ function renderNumberPad() {
   }
 
   SYMBOLS.forEach((n) => {
+    const count = counts.get(n) || 0;
     const button = document.createElement('button');
-    button.className = `num-btn ${used.has(n) ? 'used' : ''}`;
+    const completed = count === SIZE;
+    button.className = [
+      'num-btn',
+      used.has(n) ? 'used' : '',
+      state.numberFocus === n ? 'number-focus' : '',
+      completed ? 'number-complete' : '',
+    ].filter(Boolean).join(' ');
+    button.dataset.number = String(n);
     button.textContent = n;
-    button.addEventListener('click', () => enterNumber(n));
+    button.title = completed ? `${n}: 7 de 7 colocados` : `${n}: ${count} de 7 colocados`;
+    button.setAttribute('aria-label', button.title);
+    button.setAttribute('aria-pressed', String(state.numberFocus === n));
+    button.addEventListener('click', () => handleNumberButton(n));
     numbers.appendChild(button);
   });
+}
+
+function handleNumberButton(n) {
+  state.numberFocus = state.numberFocus === n ? null : n;
+  const changed = enterNumber(n);
+  if (!changed) {
+    renderBoard();
+    renderNumberPad();
+  }
 }
 
 function notesObject() {
@@ -509,6 +620,7 @@ function restoreSnapshot(snapshot) {
   state.values = cloneGrid(snapshot.values);
   state.notes = new Map(Object.entries(snapshot.notes || {}).map(([key, value]) => [key, new Set(value)]));
   state.selected = snapshot.selected ? { ...snapshot.selected } : null;
+  state.numberFocus = null;
   saveCurrent();
   renderBoard();
   renderNumberPad();
@@ -542,10 +654,16 @@ function updateHistoryButtons() {
 }
 
 function enterNumber(n) {
-  if (!state.selected) return;
+  if (!state.selected) return false;
   const { row, col } = state.selected;
-  if (isGiven(row, col)) return;
+  if (isGiven(row, col)) return false;
   const key = cellKey(row, col);
+
+  if (!state.notesMode && state.values[row][col] === n && !state.notes.get(key)?.size) {
+    renderBoard();
+    renderNumberPad();
+    return false;
+  }
 
   recordUserMove();
   if (state.notesMode) {
@@ -567,6 +685,7 @@ function enterNumber(n) {
     updateTutorial();
   }
   if (!state.notesMode) checkCompletion();
+  return true;
 }
 
 function eraseSelected() {
@@ -576,6 +695,7 @@ function eraseSelected() {
   const key = cellKey(row, col);
   if (!state.values[row][col] && !state.notes.get(key)?.size) return;
 
+  state.numberFocus = null;
   recordUserMove();
   state.values[row][col] = 0;
   state.notes.delete(key);
@@ -591,30 +711,43 @@ function removeNoteFromPeers(row, col, n) {
 
 function requestHint() {
   if (state.isTutorial) return;
+
+  if (!state.selected) {
+    showToast('Selecciona primero la casilla que quieres revelar.');
+    return;
+  }
+
+  const { row, col } = state.selected;
+  if (isGiven(row, col)) {
+    showToast('Esa casilla es fija. Selecciona una casilla editable.');
+    return;
+  }
+
+  const item = level();
+  if (state.values[row][col] === item.solution[row][col] && !state.notes.get(cellKey(row, col))?.size) {
+    showToast('Esa casilla ya tiene el valor correcto. Elige otra.');
+    return;
+  }
+
   if (state.saved.availableStars < HINT_COST) {
     showToast(`Necesitas ${HINT_COST}★ disponible para usar una pista.`);
     return;
   }
 
-  const item = level();
-  const targets = [];
-  for (let row = 0; row < SIZE; row++) for (let col = 0; col < SIZE; col++) {
-    if (!isGiven(row, col) && state.values[row][col] !== item.solution[row][col]) targets.push({ row, col });
-  }
-  if (!targets.length) return;
-
-  const target = targets[0];
   state.saved.availableStars -= HINT_COST;
-  state.values[target.row][target.col] = item.solution[target.row][target.col];
-  state.notes.delete(cellKey(target.row, target.col));
+  state.values[row][col] = item.solution[row][col];
+  state.notes.delete(cellKey(row, col));
   state.hints++;
-  state.selected = target;
+  state.numberFocus = null;
+
+  // Una pista es una ayuda comprada y no forma parte del historial reversible.
   state.undoStack = [];
   state.redoStack = [];
+
   saveCurrent();
   renderStarSummaries();
   renderBoard();
-  requestAnimationFrame(() => cellElement(target.row, target.col)?.classList.add('hinted'));
+  requestAnimationFrame(() => cellElement(row, col)?.classList.add('hinted'));
   renderNumberPad();
   updateHistoryButtons();
   checkCompletion();
@@ -638,10 +771,26 @@ function boardValid() {
   });
 }
 
+function wrongCellCount() {
+  const item = level();
+  let count = 0;
+  for (let row = 0; row < SIZE; row++) {
+    for (let col = 0; col < SIZE; col++) {
+      if (!isGiven(row, col) && state.values[row][col] !== item.solution[row][col]) count++;
+    }
+  }
+  return count;
+}
+
 function checkCompletion() {
   if (!boardComplete()) return;
   if (!boardValid()) {
-    if (!state.isTutorial && !invalidDialog.open) invalidDialog.showModal();
+    if (!state.isTutorial) {
+      const errors = wrongCellCount();
+      $('#invalidErrorCount').textContent =
+        errors === 1 ? 'Hay 1 casilla incorrecta.' : `Hay ${errors} casillas incorrectas.`;
+      if (!invalidDialog.open) invalidDialog.showModal();
+    }
     return;
   }
   completeLevel();
@@ -676,8 +825,13 @@ function completeLevel() {
   const min = Math.floor(state.elapsed / 60);
   const sec = String(state.elapsed % 60).padStart(2, '0');
   $('#victoryStars').textContent = starString(runStars);
-  $('#victoryTitle').textContent = runStars === 3 ? '¡Recorrido impecable!' : runStars === 2 ? '¡Muy buen recorrido!' : '¡Nivel completado!';
+  $('#victoryTitle').textContent = runStars === 3
+    ? '¡Recorrido impecable!'
+    : runStars === 2
+      ? '¡Muy buen recorrido!'
+      : '¡Nivel completado!';
   $('#victoryStats').textContent = `${min}:${sec} · ${state.hints} pistas`;
+
   const rewardParts = [];
   if (delta > 0) rewardParts.push(`+${delta}★ nuevas · saldo ${state.saved.availableStars}★`);
   else rewardParts.push(`Tu mejor marca sigue en ${previousBest}★`);
@@ -740,7 +894,8 @@ function updateTutorial() {
   const [title, text] = tutorialSteps[Math.min(state.tutorialStep, tutorialSteps.length - 1)];
   $('#tutorialTitle').textContent = title;
   $('#tutorialText').textContent = text;
-  $('#tutorialNextBtn').textContent = state.tutorialStep >= tutorialSteps.length - 1 ? 'Listo' : 'Siguiente';
+  $('#tutorialNextBtn').textContent =
+    state.tutorialStep >= tutorialSteps.length - 1 ? 'Listo' : 'Siguiente';
 }
 
 function nextTutorialStep() {
@@ -760,8 +915,10 @@ function nextTutorialStep() {
 }
 
 function findFirstEditable() {
-  for (let row = 0; row < SIZE; row++) for (let col = 0; col < SIZE; col++) {
-    if (!isGiven(row, col)) return { row, col };
+  for (let row = 0; row < SIZE; row++) {
+    for (let col = 0; col < SIZE; col++) {
+      if (!isGiven(row, col)) return { row, col };
+    }
   }
   return null;
 }
@@ -812,6 +969,7 @@ $('#nextLevelBtn').addEventListener('click', () => {
 $('#resetProgressBtn').addEventListener('click', () => {
   if (!confirm('¿Borrar niveles, estrellas, pistas gastadas y trofeos de Sudoproyective?')) return;
   state.saved = freshSave();
+  state.activeWorldId = 1;
   persist();
   renderHub();
   showToast('Progreso reiniciado.');
