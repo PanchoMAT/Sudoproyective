@@ -1,5 +1,5 @@
 import { ULTRA_LEVELS } from './ultra.js';
-import { startUltra } from './projective/ultra-game.js';
+import { ensureProjectiveUI } from './projective/ui.js';
 import { renderDirectionGallery, finalPlaneSvg } from './projective/visuals.js';
 import {
   projectUnlocked,
@@ -9,6 +9,9 @@ import {
   credentialEarned,
   patchSave,
 } from './projective/storage.js';
+
+ensureProjectiveUI();
+const { startUltra } = await import('./projective/ultra-game.js');
 
 const $ = (selector) => document.querySelector(selector);
 const projectPanel = $('#projectivePanel');
@@ -87,14 +90,24 @@ function renderProjective() {
   renderSecretReward();
 }
 
-// Impide abrir la pestaña antes de cumplir la condición, antes que el listener de app.js.
+// La pestaña se inyecta después de que app.js registra su navegación, por eso gestiona su propio clic.
 document.addEventListener('click', (event) => {
   const target = event.target.closest?.('.nav-btn[data-tab="projective"]');
-  if (!target || projectUnlocked()) return;
+  if (!target) return;
   event.preventDefault();
   event.stopImmediatePropagation();
-  const {done,total} = difficultProgress();
-  showToast(`Proyecto bloqueado: completa los niveles Difíciles de las seis rutas (${done}/${total}).`);
+  if (!projectUnlocked()) {
+    const {done,total} = difficultProgress();
+    showToast(`Proyecto bloqueado: completa los niveles Difíciles de las seis rutas (${done}/${total}).`);
+    return;
+  }
+  document.querySelectorAll('.tab-panel').forEach((panel) => {
+    panel.classList.toggle('active', panel.dataset.panel === 'projective');
+  });
+  document.querySelectorAll('.nav-btn').forEach((button) => {
+    button.classList.toggle('active', button.dataset.tab === 'projective');
+  });
+  renderProjective();
 }, true);
 
 function beginReveal() {
