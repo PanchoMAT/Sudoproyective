@@ -5,9 +5,15 @@ export function ensureProjectiveUI() {
     link.href = 'projective.css';
     document.head.appendChild(link);
   }
-  document.title = 'Sudoproyective · v0.7.0';
+  if (!document.querySelector('link[href="projective-v08.css"]')) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'projective-v08.css';
+    document.head.appendChild(link);
+  }
+  document.title = 'Sudoproyective · v0.8.0';
   const version = document.querySelector('.topbar .eyebrow');
-  if (version) version.textContent = 'Prototipo v0.7.0';
+  if (version) version.textContent = 'Prototipo v0.8.0';
 
   const routeTabs = document.querySelector('#routeTabs');
   if (routeTabs && !document.querySelector('#projectiveRouteGateRow')) {
@@ -39,7 +45,7 @@ export function ensureProjectiveUI() {
         <div class="hero-card ultra-intro">
           <p class="hero-kicker">Geometría oculta desbloqueada</p>
           <h2>Las seis direcciones finales</h2>
-          <p>Has dominado la campaña difícil. Ahora resuelve un desafío Ultraexperto para cada pendiente. Cada victoria revelará lentamente una familia completa de siete rectas, cada una con su propio color. Estos desafíos son fijos, se guardan automáticamente y no usan pistas.</p>
+          <p>Has dominado la campaña difícil. Ahora resuelve un desafío Ultraexperto para cada pendiente. Al terminar cada uno, el sudoku resuelto se transformará lentamente en la familia de rectas que estaba escondida detrás del tablero.</p>
           <div class="progress-card"><span class="metric-label">Construcción</span><strong id="ultraProgressText">0/6 direcciones descubiertas</strong><div class="progress-track"><span id="ultraProgressBar"></span></div></div>
         </div>
         <div id="ultraChallengeGrid" class="ultra-grid"></div>
@@ -51,15 +57,14 @@ export function ensureProjectiveUI() {
         <div id="projectiveConstruction" class="projective-construction hidden">
           <section class="construction-stage circular-stage">
             <p class="eyebrow">Construcción final</p>
-            <h3>De las ocho direcciones al plano proyectivo</h3>
-            <p>La disposición circular es un esquema visual: cada mini-tablero representa la misma colección de 49 puntos vista desde una de sus ocho direcciones.</p>
-            <div id="projectiveSubtitle" class="projective-subtitle" aria-live="polite">Preparando la construcción…</div>
+            <h3>De las rutas al plano proyectivo</h3>
+            <div id="projectiveSubtitle" class="projective-subtitle projective-narration" aria-live="polite">Preparando la construcción…</div>
             <div id="circularProjectiveGraphic" class="circular-projective-graphic"></div>
             <div class="projective-animation-controls">
               <button id="projectiveNextStageBtn" class="secondary-btn">Siguiente etapa</button>
               <button id="projectiveReplayBtn" class="secondary-btn">↻ Repetir animación</button>
             </div>
-            <p class="projective-schematic-note">La cuerda final es una representación esquemática de una única recta proyectiva: la recta del infinito.</p>
+            <p class="projective-schematic-note">La disposición circular y la cuerda final son esquemas de incidencia: la cuerda representa una única recta proyectiva, la recta del infinito.</p>
           </section>
           <section id="projectiveSummary" class="construction-stage projective-summary hidden">
             <p class="eyebrow">Plano proyectivo completado</p><h3>PG(2,7)</h3>
@@ -113,7 +118,17 @@ export function ensureProjectiveUI() {
         <p>Has dominado los niveles Difíciles de las seis rutas. Ya puedes entrar a <strong>Proyectivo</strong> y descubrir la geometría que estaba escondida detrás del juego.</p>
         <div class="modal-actions"><button id="unlockLaterBtn" class="secondary-btn">Más tarde</button><button id="unlockOpenBtn" class="primary-btn">Ir a Proyectivo</button></div>
       </dialog>
-      <dialog id="ultraVictoryDialog" class="modal victory-modal"><div class="victory-mark">◇</div><p class="eyebrow">Ultraexperto completado</p><h2 id="ultraVictoryTitle">Dirección descubierta</h2><p id="ultraVictoryText"></p><div id="ultraFamilyGraphic" class="ultra-family-graphic"></div><p class="reward-message">Siete rectas más forman parte de tu construcción.</p><button id="ultraVictoryContinue" class="primary-btn" style="width:100%;">Continuar</button></dialog>
+      <dialog id="ultraVictoryDialog" class="modal ultra-reveal-modal">
+        <p class="eyebrow">Ultraexperto completado</p>
+        <h2 id="ultraVictoryTitle">Dirección descubierta</h2>
+        <div id="ultraVictoryNarration" class="ultra-reveal-narration" aria-live="polite"></div>
+        <div id="ultraFamilyGraphic" class="ultra-family-graphic ultra-sudoku-reveal"></div>
+        <div class="ultra-reveal-actions"><button id="ultraVictoryReplay" class="secondary-btn">↻ Repetir</button><button id="ultraVictoryContinue" class="primary-btn" disabled>Observa la construcción…</button></div>
+      </dialog>
+      <dialog id="projectiveCelebrationDialog" class="modal projective-celebration-modal">
+        <div id="projectiveCelebrationFx" class="celebration-fx" aria-hidden="true"><span class="firework fw1"></span><span class="firework fw2"></span><span class="firework fw3"></span><div id="celebrationConfetti"></div></div>
+        <div class="celebration-content"><div class="celebration-mark">◇</div><p class="eyebrow">Recompensa final desbloqueada</p><h2>¡Plano proyectivo completado!</h2><p>Construiste <strong>PG(2,7)</strong>: 57 puntos, 57 rectas y una nueva recta que reúne los ocho puntos del infinito.</p><p class="celebration-reward">Tu <strong>Trofeo Proyectivo</strong> está listo.</p><button id="projectiveCelebrationContinue" class="primary-btn">Continuar</button></div>
+      </dialog>
       <dialog id="credentialDialog" class="modal credential-modal"><div class="credential-card"><span class="sparkle s1">✦</span><span class="sparkle s2">✧</span><span class="sparkle s3">✦</span><span class="sparkle s4">✧</span><div class="credential-seal">PG(2,7)</div><div id="credentialStatus" class="credential-status">DISTINCIÓN MATEMÁTICA</div><h2>Trofeo Proyectivo</h2><div class="credential-subtitle">Creador de Planos Proyectivos</div><p class="credential-copy">Has completado los desafíos finales, reunido las ocho direcciones y revelado el plano proyectivo escondido detrás de Sudoproyective. Desde este momento eres oficialmente un <strong>Creador de Planos Proyectivos</strong>.</p><p class="credential-community">¡La comunidad matemática te envía sus felicitaciones!</p><p style="color:var(--muted);font-size:.75rem;margin-bottom:0;">49 puntos afines + 8 puntos del infinito · 57 puntos · 57 rectas</p></div><button id="credentialCloseBtn" class="secondary-btn credential-close">Cerrar</button></dialog>`);
   }
 }
