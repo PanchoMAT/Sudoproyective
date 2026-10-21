@@ -1,6 +1,6 @@
 export const BRAND_NAME = 'SudoProyectivo';
 export const LEGACY_BRAND_NAME = 'Sudoproyective';
-export const APP_VERSION = '1.0';
+export const APP_VERSION = '1.0.3';
 export const COPYRIGHT_NOTICE = '© 2026 Francisco Alegría M. · Todos los derechos reservados.';
 
 function replaceBrand(text) {
@@ -63,4 +63,8 @@ function applyVisibleBrand() {
 
 if (typeof document !== 'undefined') {
   applyVisibleBrand();
+  // Algunos módulos de la fase proyectiva se cargan después del arranque y aún
+  // contienen etiquetas históricas. Estas reaplicaciones son puntuales, no observadores.
+  setTimeout(applyVisibleBrand, 120);
+  setTimeout(applyVisibleBrand, 900);
 }
