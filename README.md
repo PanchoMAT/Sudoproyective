@@ -2,7 +2,7 @@
 
 Puzzle matemático independiente inspirado en geometría afín y proyectiva finita.
 
-## v0.7
+## v0.8
 
 El tablero es `7 × 7` con símbolos `1,…,7`. Cada nivel de campaña exige no repetir números en 7 filas, 7 columnas y 7 rutas de una familia de rectas paralelas.
 
@@ -37,21 +37,36 @@ Al completar el último nivel Difícil pendiente, el juego muestra automáticame
 
 Proyectivo contiene seis desafíos **Ultraexperto**, uno por pendiente `1,…,6`. Son puzzles fijos con 12 pistas iniciales, solución única, guardado automático, notas y deshacer/rehacer. No entregan estrellas ni consumen pistas.
 
-Al resolver un Ultraexperto se revela lentamente la familia de siete rectas asociada. Las siete rectas se dibujan con colores distintos y se prolongan visualmente hasta su punto del infinito.
+## Revelación al completar cada Ultraexperto
+
+La victoria ya no muestra sólo una familia abstracta de rectas. La animación parte del mismo sudoku recién resuelto:
+
+1. se ve el tablero completo con sus 49 números;
+2. se explica que en cada ruta los siete valores son distintos;
+3. los números se desvanecen y quedan sólo las 49 posiciones como puntos;
+4. aparecen lentamente las siete rectas de la pendiente correspondiente, cada una con color propio;
+5. las siete rectas se prolongan hacia un nuevo punto del infinito, `P_N`.
+
+La narración enfatiza que los números fueron el mecanismo del puzzle, pero la estructura geométrica subyacente depende de las posiciones y de la familia de rectas.
 
 ## Construcción final de PG(2,7)
 
-Al completar los seis Ultraexpertos se habilita una animación final explicada con subtítulos.
+Al completar los seis Ultraexpertos se habilita una animación final con subtítulos grandes y progresivos.
 
-La visualización muestra ocho mini-tableros en disposición circular:
+El orden narrativo es:
 
-- filas: `m = 0`;
-- las seis rutas: `m = 1,…,6`;
-- columnas: `m = ∞`.
+1. Ruta 1;
+2. Ruta 2;
+3. Ruta 3;
+4. Ruta 4;
+5. Ruta 5;
+6. Ruta 6;
+7. Ruta 0, correspondiente a las filas horizontales;
+8. Ruta ∞, correspondiente a las columnas verticales.
 
-Cada mini-tablero representa la misma colección de 49 puntos del plano afín, organizada según una de sus ocho direcciones. Las familias se construyen una por una; cada una aporta siete rectas y un punto del infinito.
+Las ocho familias se muestran en disposición circular. Cada mini-tablero representa la misma colección de 49 puntos del plano afín, organizada según una dirección distinta. Después aparecen los ocho puntos del infinito y una cuerda esquemática representa la única **recta del infinito**.
 
-Después de las ocho familias aparecen los ocho puntos del infinito. Una cuerda esquemática pasa por ellos para representar la única **recta del infinito**. La disposición circular es deliberadamente visual: la cuerda representa incidencia proyectiva, no una recta euclidiana del dibujo.
+La disposición circular es deliberadamente visual: la cuerda representa incidencia proyectiva, no una recta euclidiana del dibujo.
 
 Así se obtiene `PG(2,7)`:
 
@@ -62,21 +77,23 @@ Así se obtiene `PG(2,7)`:
 - dos puntos determinan una recta;
 - dos rectas se encuentran en un punto.
 
-La secuencia tarda aproximadamente medio minuto en reproducción automática y también ofrece **Siguiente etapa** y **Repetir animación**.
+La secuencia ofrece reproducción automática, **Siguiente etapa** y **Repetir animación**.
 
-## Conexión con Spot It
+## Celebración y Trofeo Proyectivo
 
-Si los puntos de `PG(2,7)` se interpretan como símbolos y las rectas como cartas, se obtiene un diseño ideal de orden 7 con 57 símbolos, 57 cartas y 8 símbolos por carta. Dos cartas comparten exactamente un símbolo porque dos rectas proyectivas se cortan en exactamente un punto.
+Al completarse la recta del infinito, la recompensa final se desbloquea automáticamente y aparece una celebración visual con confeti y fuegos artificiales.
 
-## Distinción oculta
-
-La pestaña de trofeos muestra desde el inicio una **Recompensa oculta**, separada de los trofeos normales y del platino.
-
-Al completar la construcción de `PG(2,7)` se desbloquea la credencial:
+Después de la celebración queda disponible el certificado:
 
 **Trofeo Proyectivo · Creador de Planos Proyectivos**
 
 con la felicitación especial de la comunidad matemática.
+
+La recompensa sigue separada del sistema normal de trofeos y del platino.
+
+## Conexión con Spot It
+
+Si los puntos de `PG(2,7)` se interpretan como símbolos y las rectas como cartas, se obtiene un diseño ideal de orden 7 con 57 símbolos, 57 cartas y 8 símbolos por carta. Dos cartas comparten exactamente un símbolo porque dos rectas proyectivas se cortan en exactamente un punto.
 
 ## Trofeos de campaña
 
@@ -93,13 +110,19 @@ El trofeo de platino exige oro en las seis rutas. El máximo global de la campa�
 La URL con `?review=1` activa un modo de auditoría aislado del progreso real. Permite:
 
 - abrir cualquier nivel de campaña;
-- simular `0/60`, `59/60` y `60/60` niveles Difíciles;
+- completar temporalmente los 60 niveles Difíciles con un solo botón;
 - probar el candado y la ventana automática de desbloqueo de Proyectivo;
 - abrir o completar cualquiera de los seis Ultraexpertos;
+- previsualizar directamente las seis nuevas transiciones sudoku → puntos → rectas → `P_N`;
 - reproducir individualmente las ocho familias de rectas;
 - inspeccionar la construcción circular por etapas;
 - lanzar la secuencia final completa;
+- mostrar directamente la celebración final;
 - mostrar la credencial oculta.
+
+## Audio
+
+La v0.8 no incorpora narración hablada. Los subtítulos y animaciones están preparados para que una capa de audio opcional pueda evaluarse en una versión posterior.
 
 ## Pruebas
 
@@ -107,4 +130,4 @@ La URL con `?review=1` activa un modo de auditoría aislado del progreso real. P
 npm test
 ```
 
-Las pruebas verifican las seis geometrías, los 180 niveles de campaña, los seis Ultraexpertos y la estructura matemática de `PG(2,7)`.
+Las pruebas verifican las seis geometrías, los 180 niveles de campaña, los seis Ultraexpertos, la estructura matemática de `PG(2,7)` y los elementos estructurales de las nuevas visualizaciones proyectivas.
