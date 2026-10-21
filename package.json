@@ -1,9 +1,9 @@
 {
   "name": "sudoproyective",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node tests/geometry.test.mjs && node tests/puzzles.test.mjs"
+    "test": "node tests/geometry.test.mjs && node tests/puzzles.test.mjs && node tests/ultra.test.mjs && node tests/projective.test.mjs"
   }
 }
