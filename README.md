@@ -1,18 +1,14 @@
 # Sudoproyective
 
-Puzzle matemático independiente inspirado en geometría afín finita.
+Puzzle matemático independiente inspirado en geometría afín y proyectiva finita.
 
-## v0.5
+## v0.6
 
-El tablero es `7 × 7` con símbolos `1,…,7`. Cada nivel exige no repetir números en:
-
-- 7 filas;
-- 7 columnas;
-- 7 rutas de una familia de rectas paralelas.
+El tablero es `7 × 7` con símbolos `1,…,7`. Cada nivel de campaña exige no repetir números en 7 filas, 7 columnas y 7 rutas de una familia de rectas paralelas.
 
 La regla visible sigue siendo: **fila, columna y ruta: sin repetir**.
 
-## Seis rutas
+## Campaña principal
 
 La campaña usa las seis pendientes diagonales no redundantes de `AG(2,7)`:
 
@@ -23,39 +19,67 @@ La campaña usa las seis pendientes diagonales no redundantes de `AG(2,7)`:
 - Ruta 5 → `m = 5`;
 - Ruta 6 → `m = 6`.
 
-La pendiente `0` coincide con las filas y la dirección vertical con las columnas, por lo que no se muestran como rutas adicionales.
+La pendiente `0` coincide con las filas y la dirección vertical con las columnas.
 
-## Campaña de 180 niveles
-
-Cada ruta contiene exactamente 30 puzzles fijos:
+Cada ruta contiene 30 puzzles fijos:
 
 - niveles 1–10: **Fácil**;
 - niveles 11–20: **Intermedio**;
 - niveles 21–30: **Difícil**.
 
-En total hay `6 × 30 = 180` niveles y todos están disponibles desde el inicio.
+En total hay `6 × 30 = 180` niveles. Los 180 puzzles son distintos y tienen solución única bajo la ruta correspondiente.
 
-Los 48 puzzles que ya existían en v0.4 conservan sus IDs y sus tableros, pero quedan reorganizados dentro de la nueva estructura de dificultad. Esto permite mantener compatible el progreso local existente.
-
-Todos los 180 puzzles son distintos y tienen solución única bajo la ruta correspondiente.
-
-## Pistas
-
-El jugador elige la casilla que quiere revelar. El costo depende de la dificultad:
+### Pistas
 
 - Fácil: **2★**;
 - Intermedio: **3★**;
 - Difícil: **4★**.
 
-La puntuación del nivel sigue midiendo cuántas pistas se usaron:
+La puntuación del nivel sigue siendo 3★ sin pistas, 2★ con una pista y 1★ con dos o más.
 
-- 3★: sin pistas;
-- 2★: una pista;
-- 1★: dos o más pistas.
+## Proyecto final: geometría oculta
 
-Las estrellas históricas determinan trofeos. Las estrellas disponibles son el saldo que puede gastarse en pistas.
+La quinta pestaña, **Proyecto**, existe desde el inicio pero permanece bloqueada. Se desbloquea al completar los 60 niveles Difíciles: los niveles 21–30 de las seis rutas.
 
-## Progresión y trofeos
+El Proyecto contiene seis desafíos **Ultraexperto**, uno por pendiente. Son puzzles fijos, distintos de la campaña, con 12 pistas iniciales, solución única, guardado automático, notas y deshacer/rehacer. No entregan estrellas ni consumen pistas: forman una fase final independiente del sistema de trofeos.
+
+Al resolver un Ultraexperto se revela visualmente la familia de siete rectas asociada a esa pendiente.
+
+Después de completar los seis desafíos se habilita la construcción final:
+
+1. las seis familias diagonales aportan `6 × 7 = 42` rectas;
+2. las 7 filas corresponden a la dirección `m = 0`;
+3. las 7 columnas corresponden a la dirección `m = ∞`;
+4. en total aparecen las `8 × 7 = 56` rectas de `AG(2,7)`;
+5. se añade un punto del infinito por cada una de las ocho direcciones;
+6. los ocho puntos nuevos forman la recta del infinito.
+
+Así se obtiene `PG(2,7)`:
+
+- 57 puntos;
+- 57 rectas;
+- 8 puntos en cada recta;
+- 8 rectas por cada punto;
+- dos puntos determinan una recta;
+- dos rectas se encuentran en un punto.
+
+La secuencia utiliza animaciones SVG/CSS para revelar progresivamente familias, puntos del infinito y recta del infinito.
+
+## Conexión con Spot It
+
+La construcción final muestra también la relación combinatoria con un Spot It/Dobble ideal de orden 7: si los puntos son símbolos y las rectas son cartas, se obtienen 57 símbolos y 57 cartas con 8 símbolos por carta; cada par de cartas comparte exactamente un símbolo.
+
+## Distinción oculta
+
+La pestaña de trofeos muestra desde el inicio una **Recompensa oculta**, separada de los trofeos normales y del platino.
+
+Al completar la construcción de `PG(2,7)` se desbloquea la credencial:
+
+**Trofeo Proyectivo · Creador de Planos Proyectivos**
+
+con la felicitación especial de la comunidad matemática.
+
+## Trofeos de campaña
 
 Cada ruta contiene 30 niveles y un máximo de 90★:
 
@@ -63,30 +87,7 @@ Cada ruta contiene 30 niveles y un máximo de 90★:
 - 🥈 Plata: 60★;
 - 🥇 Oro: 90★.
 
-El trofeo de platino exige oro en las seis rutas.
-
-El máximo global de la campaña es:
-
-`180 × 3 = 540★`.
-
-## Interfaz
-
-- selector compacto para Ruta 1–6;
-- niveles listados verticalmente y separados por dificultad;
-- cada fila muestra `Nivel N`, estado de completado y mejor marca de estrellas;
-- todos los niveles están desbloqueados;
-- números completados muestran `✓` en el teclado;
-- seleccionar cualquier casilla apaga el resaltado numérico anterior;
-- la validación final informa cuántas casillas son incorrectas, pero no cuáles;
-- notas, deshacer/rehacer, guardado local, cronómetro y selector numérico fijo para celular.
-
-## Matemática
-
-En coordenadas de pantalla `(row, col)`, una ruta de pendiente `m` cumple
-
-`row = m·col + b (mod 7)`.
-
-Cada `m ∈ {1,2,3,4,5,6}` define una clase paralela distinta del plano afín `AG(2,7)`.
+El trofeo de platino exige oro en las seis rutas. El máximo global de la campaña permanece en `180 × 3 = 540★`. El Proyecto final no modifica ese total.
 
 ## Pruebas
 
@@ -94,12 +95,4 @@ Cada `m ∈ {1,2,3,4,5,6}` define una clase paralela distinta del plano afín `A
 npm test
 ```
 
-Las pruebas verifican:
-
-- las seis geometrías;
-- 30 niveles por ruta;
-- 10 niveles por dificultad en cada ruta;
-- IDs, números y puzzles únicos;
-- validez de todas las soluciones;
-- compatibilidad entre pistas y soluciones;
-- unicidad de los 180 puzzles.
+Las pruebas verifican las seis geometrías, los 180 niveles de campaña y los seis Ultraexpertos, incluyendo validez de soluciones, consistencia de pistas y unicidad.
