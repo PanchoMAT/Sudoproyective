@@ -274,7 +274,7 @@ function typeNarration(text) {
 
 function scheduleReveal(callback, delay) {
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const timer = setTimeout(callback, reduced ? Math.min(90, delay * .02) : delay);
+  const timer = setTimeout(callback, reduced ? Math.min(140, delay * .025) : delay);
   revealTimers.push(timer);
 }
 
@@ -293,26 +293,39 @@ function runUltraReveal(current, { preview = false } = {}) {
 
   typeNarration(`Completaste el desafío de Ruta ${slope}.`);
 
+  // Primero invitamos a mirar la familia de rutas que el jugador acaba de construir.
   scheduleReveal(() => {
-    svg?.classList.add('phase-points');
-    typeNarration('En cada una de las siete rutas, los valores son distintos. Ahora los números dejan de ser lo importante: conservamos solamente las posiciones del tablero.');
-  }, 3200);
+    typeNarration(`Unamos las rutas que acabas de crear. Todas tienen la misma inclinación —o pendiente— ${slope}.`);
+  }, 5600);
 
+  // El texto permanece estable mientras se dibujan las siete rectas sobre el sudoku con números.
   scheduleReveal(() => {
     svg?.classList.add('phase-lines');
-    typeNarration(`Al unir las posiciones de cada ruta aparecen siete rectas. Todas tienen inclinación —o pendiente— ${slope}.`);
-  }, 7900);
+  }, 9000);
+
+  // Sólo después de terminar de dibujar las rectas cambiamos el foco: números -> puntos.
+  scheduleReveal(() => {
+    typeNarration('En cada una de las siete rutas, los valores son distintos. Ahora los números dejan de ser lo importante: conservamos solamente las posiciones del tablero.');
+  }, 15800);
+
+  scheduleReveal(() => {
+    svg?.classList.add('phase-points');
+  }, 19000);
+
+  // Finalmente introducimos el nuevo punto sin nombrar todavía el plano proyectivo.
+  scheduleReveal(() => {
+    typeNarration(`Hagamos que todas estas rectas que creaste se junten en un nuevo punto. Lo llamamos P_${slope}.`);
+  }, 24000);
 
   scheduleReveal(() => {
     svg?.classList.add('phase-infinity');
-    typeNarration(`En el plano proyectivo, todas las rectas con pendiente ${slope} se encuentran en un nuevo punto. Lo llamaremos P_${slope}.`);
-  }, 13300);
+  }, 27600);
 
   scheduleReveal(() => {
     svg?.classList.add('phase-complete');
     continueButton.disabled = false;
     continueButton.textContent = preview ? 'Cerrar vista previa' : 'Continuar';
-  }, 19400);
+  }, 35000);
 
   if (!ultraVictoryDialog.open) ultraVictoryDialog.showModal();
 }
