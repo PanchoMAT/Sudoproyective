@@ -61,7 +61,7 @@ export function startUltra(index) {
   $('#ultraNotesBtn').classList.remove('active');
   $('#ultraRoutesBtn').classList.add('active');
   $('#ultraRoutesBtn').innerHTML = 'Rutas <span>●</span>';
-  $('#ultraMeta').textContent = `Proyecto final · Ruta ${current.slope}`;
+  $('#ultraMeta').textContent = `Proyectivo · Ruta ${current.slope}`;
   $('#ultraTitle').textContent = 'Desafío Ultraexperto';
   $('#hubScreen').classList.remove('active');
   $('#mainNav').classList.add('hidden');
