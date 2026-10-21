@@ -68,6 +68,42 @@ export function familySvg(direction, { compact = true, animated = false, extendT
   return `<svg class="family-svg ${animated ? 'animated-family' : ''}" viewBox="0 0 ${viewW} ${viewH}" role="img" aria-label="Familia de rectas ${meta.label}">${pieces.join('')}</svg>`;
 }
 
+export function ultraRevealSvg(solution, direction) {
+  const meta = directionMeta(direction);
+  const step = 42;
+  const pad = 38;
+  const gridEnd = pad + step * 6;
+  const infX = 395;
+  const infY = pad + step * 3;
+  const pieces = [];
+
+  pieces.push(`<rect class="ultra-reveal-board" x="17" y="17" width="${gridEnd - pad + 42}" height="${gridEnd - pad + 42}" rx="18" style="--family-color:${meta.familyColor}"/>`);
+
+  for (let row = 0; row < 7; row++) {
+    for (let col = 0; col < 7; col++) {
+      const x = pad + col * step;
+      const y = pad + row * step;
+      pieces.push(`<rect class="ultra-reveal-cell" x="${x - 18}" y="${y - 18}" width="36" height="36" rx="7"/>`);
+      pieces.push(`<text class="ultra-reveal-number" x="${x}" y="${y + 6}" text-anchor="middle">${solution[row][col]}</text>`);
+      pieces.push(`<circle class="ultra-reveal-point" cx="${x}" cy="${y}" r="4.2"/>`);
+    }
+  }
+
+  for (let b = 0; b < 7; b++) {
+    const color = ROUTE_COLORS[b];
+    const points = routePoints(direction, b, pad, step);
+    const delay = `${(b * .38).toFixed(2)}s`;
+    pieces.push(`<polyline class="ultra-reveal-route" points="${polylinePoints(points)}" style="--line-color:${color};--route-delay:${delay}"/>`);
+    const anchor = points.reduce((best, point) => point.x > best.x ? point : best, points[0]);
+    pieces.push(`<line class="ultra-reveal-extension" x1="${anchor.x}" y1="${anchor.y}" x2="${infX}" y2="${infY}" style="--line-color:${color};--route-delay:${delay}"/>`);
+  }
+
+  pieces.push(`<circle class="ultra-reveal-infinity" cx="${infX}" cy="${infY}" r="11" style="--family-color:${meta.familyColor}"/>`);
+  pieces.push(`<text class="ultra-reveal-infinity-label" x="${infX}" y="${infY + 31}" text-anchor="middle">P${direction === 'inf' ? '∞' : direction}</text>`);
+
+  return `<svg class="ultra-reveal-svg phase-numbers" viewBox="0 0 440 330" role="img" aria-label="Del sudoku resuelto a las rectas de pendiente ${direction}">${pieces.join('')}</svg>`;
+}
+
 export function renderDirectionGallery(root) {
   root.innerHTML = '';
   DIRECTIONS.forEach((direction, index) => {
