@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 512 512" role="img" aria-label="Icono SudoProyectivo">
+  <rect width="512" height="512" rx="112" fill="#0b1018"/>
+  <rect x="76" y="76" width="300" height="300" rx="52" fill="#121a27" stroke="#72a7ff" stroke-width="10"/>
+  <g fill="#dce7f6" opacity=".92">
+    <circle cx="116" cy="116" r="8"/><circle cx="156" cy="116" r="8"/><circle cx="196" cy="116" r="8"/><circle cx="236" cy="116" r="8"/><circle cx="276" cy="116" r="8"/><circle cx="316" cy="116" r="8"/><circle cx="356" cy="116" r="8"/>
+    <circle cx="116" cy="156" r="8"/><circle cx="156" cy="156" r="8"/><circle cx="196" cy="156" r="8"/><circle cx="236" cy="156" r="8"/><circle cx="276" cy="156" r="8"/><circle cx="316" cy="156" r="8"/><circle cx="356" cy="156" r="8"/>
+    <circle cx="116" cy="196" r="8"/><circle cx="156" cy="196" r="8"/><circle cx="196" cy="196" r="8"/><circle cx="236" cy="196" r="8"/><circle cx="276" cy="196" r="8"/><circle cx="316" cy="196" r="8"/><circle cx="356" cy="196" r="8"/>
+    <circle cx="116" cy="236" r="8"/><circle cx="156" cy="236" r="8"/><circle cx="196" cy="236" r="8"/><circle cx="236" cy="236" r="8"/><circle cx="276" cy="236" r="8"/><circle cx="316" cy="236" r="8"/><circle cx="356" cy="236" r="8"/>
+    <circle cx="116" cy="276" r="8"/><circle cx="156" cy="276" r="8"/><circle cx="196" cy="276" r="8"/><circle cx="236" cy="276" r="8"/><circle cx="276" cy="276" r="8"/><circle cx="316" cy="276" r="8"/><circle cx="356" cy="276" r="8"/>
+    <circle cx="116" cy="316" r="8"/><circle cx="156" cy="316" r="8"/><circle cx="196" cy="316" r="8"/><circle cx="236" cy="316" r="8"/><circle cx="276" cy="316" r="8"/><circle cx="316" cy="316" r="8"/><circle cx="356" cy="316" r="8"/>
+    <circle cx="116" cy="356" r="8"/><circle cx="156" cy="356" r="8"/><circle cx="196" cy="356" r="8"/><circle cx="236" cy="356" r="8"/><circle cx="276" cy="356" r="8"/><circle cx="316" cy="356" r="8"/><circle cx="356" cy="356" r="8"/>
+  </g>
+  <polyline points="116,356 156,316 196,276 236,236 276,196 316,156 356,116" fill="none" stroke="#f3c86a" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="356" y1="116" x2="432" y2="58" stroke="#f3c86a" stroke-width="15" stroke-linecap="round"/>
+  <circle cx="443" cy="49" r="23" fill="#70e1c1" stroke="#f4f7fb" stroke-width="7"/>
+</svg>
