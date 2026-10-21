@@ -1,53 +1,11 @@
-const raw = [
-{"id":"level-01","number":1,"name":"Primer cruce","difficulty":"Iniciación","subtitle":"15 casillas por completar","world":1,"slope":1,"p":"0754361061200475000126120543503612012750000360275","s":"2754361361275475436126127543543612712754364361275"},
-{"id":"level-02","number":2,"name":"El borde continúa","difficulty":"Iniciación","subtitle":"17 casillas por completar","world":1,"slope":1,"p":"1020536030140702753013610275275000001427537530000","s":"1427536536142742753613614275275361461427537536142"},
-{"id":"level-03","number":3,"name":"Ruta visible","difficulty":"Iniciación","subtitle":"19 casillas por completar","world":1,"slope":1,"p":"4600050172504625340070061700607203070534600040172","s":"4617253172534625346173461725617253472534615346172"},
-{"id":"level-04","number":4,"name":"Tres miradas","difficulty":"Iniciación","subtitle":"21 casillas por completar","world":1,"slope":1,"p":"0260010000207500140002600143432605051430676700402","s":"3267514143267575143262675143432675151432676751432"},
-{"id":"level-05","number":5,"name":"Vuelta completa","difficulty":"Iniciación","subtitle":"23 casillas por completar","world":1,"slope":1,"p":"2500600573040203601203040207000250040257001200360","s":"2573641573641273641253641257641257341257361257364"},
-{"id":"level-06","number":6,"name":"Primer viaje","difficulty":"Iniciación","subtitle":"25 casillas por completar","world":1,"slope":1,"p":"0000013700013000013270013070403070500276000276041","s":"2765413765413265413275413276413276513276543276541"},
-{"id":"level-07","number":7,"name":"Cruce oculto","difficulty":"Intermedio","subtitle":"26 casillas por completar","world":1,"slope":1,"p":"0210040046501001074054000137107400000010040740001","s":"5213746746521321374654652137137465265213743746521"},
-{"id":"level-08","number":8,"name":"Pocas señales","difficulty":"Intermedio","subtitle":"27 casillas por completar","world":1,"slope":1,"p":"0051340251340000346001300000000020106020100025100","s":"7251346251346751346721346725346725146725136725134"},
-{"id":"level-09","number":9,"name":"Entre bordes","difficulty":"Intermedio","subtitle":"28 casillas por completar","world":1,"slope":1,"p":"0406000600320000006507600024000476047600320000406","s":"2476513651324732476517651324132476547651325132476"},
-{"id":"level-10","number":10,"name":"Ruta decisiva","difficulty":"Intermedio","subtitle":"29 casillas por completar","world":1,"slope":1,"p":"7002060006300007010501250000000012501050375030000","s":"7412563256374137412561256374637412541256375637412"},
-{"id":"level-11","number":11,"name":"Nudo afín","difficulty":"Intermedio","subtitle":"30 casillas por completar","world":1,"slope":1,"p":"0075010540062706005010500002100200020000060006070","s":"6275413541362736275417541362136275427541364136275"},
-{"id":"level-12","number":12,"name":"Travesía","difficulty":"Intermedio","subtitle":"31 casillas por completar","world":1,"slope":1,"p":"0300107000300000000043401070703420010053400010000","s":"5342167675342121675343421675753421616753424216753"},
-{"id":"level-13","number":13,"name":"Sin atajos","difficulty":"Avanzado","subtitle":"32 casillas por completar","world":1,"slope":1,"p":"4507030020000027000000631400031002001000700400000","s":"4527631527631427631457631452631452731452761452763"},
-{"id":"level-14","number":14,"name":"Siete pasos","difficulty":"Avanzado","subtitle":"33 casillas por completar","world":1,"slope":1,"p":"0400216200000000001001004070070000000050217210000","s":"3457216216345745721631634572572163463457217216345"},
-{"id":"level-15","number":15,"name":"Punto de giro","difficulty":"Avanzado","subtitle":"34 casillas por completar","world":1,"slope":1,"p":"0040000240010043010023600500010000300004000500000","s":"5243617243617543617523617524617524317524367524361"},
-{"id":"level-16","number":16,"name":"Geometría fina","difficulty":"Avanzado","subtitle":"35 casillas por completar","world":1,"slope":1,"p":"3000060002000020400700300500000204000040006030002","s":"3175264752643126431754317526175264352643176431752"},
-{"id":"level-17","number":17,"name":"Ruta maestra","difficulty":"Avanzado","subtitle":"35 casillas por completar","world":1,"slope":1,"p":"2000000040502100600040000000104000207062000001000","s":"2134756347562175621346213475134756247562135621347"},
-{"id":"level-18","number":18,"name":"Horizonte","difficulty":"Avanzado","subtitle":"36 casillas por completar","world":1,"slope":1,"p":"0000000000510000000000010067504060304000000260050","s":"2673514673514273514263514267514267314267354267351"},
-{"id":"level-19","number":19,"name":"Primer salto","difficulty":"Exploración","subtitle":"18 casillas por completar","world":2,"slope":2,"p":"0034567200567134567004507000567120460123407000050","s":"1234567234567134567124567123567123467123457123456"},
-{"id":"level-20","number":20,"name":"Doble paso","difficulty":"Exploración","subtitle":"23 casillas por completar","world":2,"slope":2,"p":"4010570502401001300207200130005004004003503072461","s":"4613572572461361357247246135135724624613573572461"},
-{"id":"level-21","number":21,"name":"Borde veloz","difficulty":"Dominio","subtitle":"29 casillas por completar","world":2,"slope":2,"p":"0306000050160000000604270016642003000000003004275","s":"5316427753164227531644275316642753116427533164275"},
-{"id":"level-22","number":22,"name":"Cruce de dos","difficulty":"Dominio","subtitle":"32 casillas por completar","world":2,"slope":2,"p":"0600070000000361307207200030000000604600070002400","s":"4613572572461361357247246135135724624613573572461"},
-{"id":"level-23","number":23,"name":"Vuelta doble","difficulty":"Desafío","subtitle":"33 casillas por completar","world":2,"slope":2,"p":"0020006000003000560120030060001030000001002045001","s":"7123456567123434567121234567671234545671232345671"},
-{"id":"level-24","number":24,"name":"Segunda dirección","difficulty":"Desafío","subtitle":"33 casillas por completar","world":2,"slope":2,"p":"0700603007040003000000000004400350000003577000130","s":"5724613357246113572466135724461357224613577246135"},
-{"id":"level-25","number":25,"name":"Primer triple","difficulty":"Exploración","subtitle":"18 casillas por completar","world":3,"slope":3,"p":"6517000510020617324000324651300051004600734650032","s":"6517324517324617324657324651324651724651734651732"},
-{"id":"level-26","number":26,"name":"Salto triple","difficulty":"Exploración","subtitle":"23 casillas por completar","world":3,"slope":3,"p":"0210604000072007213001065472507000001365070007210","s":"7213654365472147213651365472547213621365476547213"},
-{"id":"level-27","number":27,"name":"Borde tres","difficulty":"Dominio","subtitle":"29 casillas por completar","world":3,"slope":3,"p":"3502046072040000100000046357000000006350016000004","s":"3572146572146372146352146357146357246357216357214"},
-{"id":"level-28","number":28,"name":"Cruce profundo","difficulty":"Dominio","subtitle":"32 casillas por completar","world":3,"slope":3,"p":"1000047000020000054704010300000070070006006047100","s":"1236547547123623654714712365365471271236546547123"},
-{"id":"level-29","number":29,"name":"Giro triple","difficulty":"Desafío","subtitle":"33 casillas por completar","world":3,"slope":3,"p":"7050006007000000000000503060072540030000045001600","s":"7254316167254343167252543167672543131672545431672"},
-{"id":"level-30","number":30,"name":"Tercera dirección","difficulty":"Desafío","subtitle":"33 casillas por completar","world":3,"slope":3,"p":"0376000020130007640010000760700201000000000020000","s":"1376425425137637642512513764764251351376426425137"},
-{"id":"level-31","number":31,"name":"Ruta espejo","difficulty":"Exploración","subtitle":"18 casillas por completar","world":4,"slope":4,"p":"0560740374010620563740300210021560700304217401060","s":"1563742374215621563746374215421563756374217421563"},
-{"id":"level-32","number":32,"name":"Tres hacia arriba","difficulty":"Exploración","subtitle":"23 casillas por completar","world":4,"slope":4,"p":"6500040000005230027140004365436527152704300000000","s":"6527143714365236527142714365436527152714361436527"},
-{"id":"level-33","number":33,"name":"Borde inverso","difficulty":"Dominio","subtitle":"29 casillas por completar","world":4,"slope":4,"p":"0010060032000006070004000006000260732047510400102","s":"7513264132647526475134751326513264732647516475132"},
-{"id":"level-34","number":34,"name":"Cruce espejo","difficulty":"Dominio","subtitle":"32 casillas por completar","world":4,"slope":4,"p":"0000300000700000600030540071130002000000002713540","s":"6271354462713554627133546271135462771354622713546"},
-{"id":"level-35","number":35,"name":"Retorno triple","difficulty":"Desafío","subtitle":"33 casillas por completar","world":4,"slope":4,"p":"0000420031006030406700000050000050100050106000040","s":"7531426531426731426751426753426753126753146753142"},
-{"id":"level-36","number":36,"name":"Dirección menos tres","difficulty":"Desafío","subtitle":"33 casillas por completar","world":4,"slope":4,"p":"0000006070045160000700000000004013700000640060503","s":"4513726372645164513721372645264513751372647264513"},
-{"id":"level-37","number":37,"name":"Doble inversa","difficulty":"Exploración","subtitle":"18 casillas por completar","world":5,"slope":5,"p":"1326075260051347013260032640326070100701307000004","s":"1326475264751347513265132647326475164751327513264"},
-{"id":"level-38","number":38,"name":"Paso hacia arriba","difficulty":"Exploración","subtitle":"23 casillas por completar","world":5,"slope":5,"p":"4005371000603001026033014000530100005071020650714","s":"4265371142653771426533714265537142665371422653714"},
-{"id":"level-39","number":39,"name":"Borde gemelo","difficulty":"Dominio","subtitle":"29 casillas por completar","world":5,"slope":5,"p":"0003500020100004201055042013057006003504000100000","s":"2613574426135774261355742613357426113574266135742"},
-{"id":"level-40","number":40,"name":"Cruce invertido","difficulty":"Dominio","subtitle":"32 casillas por completar","world":5,"slope":5,"p":"0000600760100010000600763050000247600000006010007","s":"5247631763152415247634763152315247624763156315247"},
-{"id":"level-41","number":41,"name":"Vuelta menos dos","difficulty":"Desafío","subtitle":"33 casillas por completar","world":5,"slope":5,"p":"2650100000700000000040004000002053160310000000603","s":"2653147314726572653145314726472653165314721472653"},
-{"id":"level-42","number":42,"name":"Quinta dirección","difficulty":"Desafío","subtitle":"33 casillas por completar","world":5,"slope":5,"p":"2003007000003000000606004570000030000020101040706","s":"2613457572613434572616134572726134545726131345726"},
-{"id":"level-43","number":43,"name":"Diagonal inversa","difficulty":"Exploración","subtitle":"18 casillas por completar","world":6,"slope":6,"p":"6513027002700170513401300705276013400002760270503","s":"6513427342765176513421342765276513451342764276513"},
-{"id":"level-44","number":44,"name":"Espejo simple","difficulty":"Exploración","subtitle":"23 casillas por completar","world":6,"slope":6,"p":"6502043004060006070007200360406002100014360436502","s":"6572143214365736572147214365436572157214361436572"},
-{"id":"level-45","number":45,"name":"Borde contrario","difficulty":"Dominio","subtitle":"29 casillas por completar","world":6,"slope":6,"p":"0000120702503600007106012000204307030700040000007","s":"4367125712543654367126712543254367136712541254367"},
-{"id":"level-46","number":46,"name":"Cruce reverso","difficulty":"Dominio","subtitle":"32 casillas por completar","world":6,"slope":6,"p":"0523001000200000050060000000364005023001005006007","s":"7523641175236441752366417523364175223641755236417"},
-{"id":"level-47","number":47,"name":"Vuelta inversa","difficulty":"Desafío","subtitle":"33 casillas por completar","world":6,"slope":6,"p":"7005030030001000003000004050100007007400205000701","s":"7415236236741541523673674152152367467415235236741"},
-{"id":"level-48","number":48,"name":"Sexta dirección","difficulty":"Desafío","subtitle":"33 casillas por completar","world":6,"slope":6,"p":"0200000000001704020011700000517060005070020000700","s":"6235174462351774623511746235517462335174622351746"}
-];
+import route1 from './data/route1.js';
+import route2 from './data/route2.js';
+import route3 from './data/route3.js';
+import route4 from './data/route4.js';
+import route5 from './data/route5.js';
+import route6 from './data/route6.js';
+
+const routeData = [route1, route2, route3, route4, route5, route6];
 
 function parseGrid(text) {
   return Array.from({ length: 7 }, (_, row) =>
@@ -55,68 +13,55 @@ function parseGrid(text) {
   );
 }
 
-export const LEVELS = raw.map(({ p, s, ...meta }) => ({
-  ...meta,
-  slopes: [meta.slope],
+function difficultyFor(localNumber) {
+  if (localNumber <= 10) return 'Fácil';
+  if (localNumber <= 20) return 'Intermedio';
+  return 'Difícil';
+}
+
+function signedStep(slope) {
+  return slope <= 3 ? slope : slope - 7;
+}
+
+function routeDescription(slope) {
+  const step = signedStep(slope);
+  if (step > 0) {
+    return `La ruta baja ${step} ${step === 1 ? 'casilla' : 'casillas'} al avanzar una columna y continúa por el borde opuesto.`;
+  }
+  const up = Math.abs(step);
+  return `La pendiente es ${slope} en F₇; visualmente la ruta sube ${up} ${up === 1 ? 'casilla' : 'casillas'} al avanzar una columna.`;
+}
+
+const raw = routeData.flatMap((rows, index) => {
+  const world = index + 1;
+  return rows.map(([id, localNumber, p, s]) => ({ id, world, localNumber, p, s }));
+});
+
+export const LEVELS = raw.map(({ id, world, localNumber, p, s }, index) => ({
+  id,
+  number: index + 1,
+  localNumber,
+  name: `Nivel ${localNumber}`,
+  difficulty: difficultyFor(localNumber),
+  subtitle: `${[...p].filter((value) => value === '0').length} casillas por completar`,
+  world,
+  slope: world,
+  slopes: [world],
   puzzle: parseGrid(p),
   solution: parseGrid(s),
 }));
 
-export const WORLDS = [
-  {
-    id: 1,
-    slope: 1,
-    signedStep: 1,
-    name: "Ruta +1",
-    kicker: "Dirección 1 · diagonal base",
-    description: "La ruta baja 1 casilla al avanzar una columna. Es la geometría original de Sudoproyective.",
-    groups: ["Iniciación", "Intermedio", "Avanzado"],
-  },
-  {
-    id: 2,
-    slope: 2,
-    signedStep: 2,
-    name: "Ruta +2",
-    kicker: "Dirección 2 · salto doble",
-    description: "La ruta baja 2 casillas por cada columna y continúa por el borde opuesto.",
-    groups: ["Exploración", "Dominio", "Desafío"],
-  },
-  {
-    id: 3,
-    slope: 3,
-    signedStep: 3,
-    name: "Ruta +3",
-    kicker: "Dirección 3 · salto triple",
-    description: "La ruta baja 3 casillas por cada columna: el salto positivo más largo antes de cambiar de orientación.",
-    groups: ["Exploración", "Dominio", "Desafío"],
-  },
-  {
-    id: 4,
-    slope: 4,
-    signedStep: -3,
-    name: "Ruta −3",
-    kicker: "Dirección 4 · triple inversa",
-    description: "Equivale a pendiente 4 en F₇: visualmente la ruta sube 3 casillas por cada columna.",
-    groups: ["Exploración", "Dominio", "Desafío"],
-  },
-  {
-    id: 5,
-    slope: 5,
-    signedStep: -2,
-    name: "Ruta −2",
-    kicker: "Dirección 5 · doble inversa",
-    description: "Equivale a pendiente 5 en F₇: visualmente la ruta sube 2 casillas por cada columna.",
-    groups: ["Exploración", "Dominio", "Desafío"],
-  },
-  {
-    id: 6,
-    slope: 6,
-    signedStep: -1,
-    name: "Ruta −1",
-    kicker: "Dirección 6 · diagonal inversa",
-    description: "Equivale a pendiente 6 en F₇: visualmente la ruta sube 1 casilla por cada columna.",
-    groups: ["Exploración", "Dominio", "Desafío"],
-  },
-];
+export const WORLDS = Array.from({ length: 6 }, (_, index) => {
+  const slope = index + 1;
+  return {
+    id: slope,
+    slope,
+    signedStep: signedStep(slope),
+    name: `Ruta ${slope}`,
+    kicker: `Pendiente ${slope} en F₇`,
+    description: routeDescription(slope),
+    groups: ['Fácil', 'Intermedio', 'Difícil'],
+  };
+});
 
-export const DIFFICULTIES = [...new Set(WORLDS.flatMap((world) => world.groups))];
+export const DIFFICULTIES = ['Fácil', 'Intermedio', 'Difícil'];
