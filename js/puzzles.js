@@ -72,7 +72,10 @@ if (typeof document !== 'undefined') {
   setTimeout(async () => {
     try {
       await import('./projective.js');
-      if (window.__SUDOP_REVIEW__) await import('./review.js');
+      if (window.__SUDOP_REVIEW__) {
+        await import('./review.js');
+        await import('./review-polish.js');
+      }
     } catch (error) {
       console.error('No se pudo cargar la fase final de Sudoproyective', error);
     }
