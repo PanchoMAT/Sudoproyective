@@ -93,26 +93,24 @@
 }
 .ultra-reveal-infinity-label { fill: var(--family-color); font-size: 20px; font-weight: 950; opacity: 0; }
 
+/* Las rectas se dibujan primero sobre el sudoku todavía numerado. */
 .ultra-reveal-svg.phase-points .ultra-reveal-number,
-.ultra-reveal-svg.phase-lines .ultra-reveal-number,
 .ultra-reveal-svg.phase-infinity .ultra-reveal-number,
 .ultra-reveal-svg.phase-complete .ultra-reveal-number {
   opacity: 0;
   transform: scale(.78);
 }
 .ultra-reveal-svg.phase-points .ultra-reveal-cell,
-.ultra-reveal-svg.phase-lines .ultra-reveal-cell,
 .ultra-reveal-svg.phase-infinity .ultra-reveal-cell,
 .ultra-reveal-svg.phase-complete .ultra-reveal-cell { opacity: .12; }
 .ultra-reveal-svg.phase-points .ultra-reveal-board,
-.ultra-reveal-svg.phase-lines .ultra-reveal-board,
 .ultra-reveal-svg.phase-infinity .ultra-reveal-board,
 .ultra-reveal-svg.phase-complete .ultra-reveal-board { opacity: .35; stroke-opacity: .45; }
 .ultra-reveal-svg.phase-points .ultra-reveal-point,
-.ultra-reveal-svg.phase-lines .ultra-reveal-point,
 .ultra-reveal-svg.phase-infinity .ultra-reveal-point,
 .ultra-reveal-svg.phase-complete .ultra-reveal-point { opacity: .92; }
 .ultra-reveal-svg.phase-lines .ultra-reveal-route,
+.ultra-reveal-svg.phase-points .ultra-reveal-route,
 .ultra-reveal-svg.phase-infinity .ultra-reveal-route,
 .ultra-reveal-svg.phase-complete .ultra-reveal-route {
   opacity: .92;
@@ -138,6 +136,21 @@
 
 /* Narración final: más grande y legible */
 .projective-subtitle.projective-narration { min-height: 132px; margin: 18px 0 12px; }
+.projective-subtitle.final-focus {
+  min-height: 188px;
+  max-width: 760px;
+  margin: 30px auto 22px;
+  padding: 24px 26px;
+  border-color: rgba(243,200,106,.72);
+  background:
+    radial-gradient(circle at 50% 20%, rgba(243,200,106,.18), transparent 62%),
+    rgba(9,16,27,.93);
+  color: #fff2bf;
+  font-size: clamp(1.55rem, 5vw, 2.3rem);
+  line-height: 1.42;
+  font-weight: 900;
+  box-shadow: 0 0 40px rgba(243,200,106,.10), inset 0 0 30px rgba(243,200,106,.04);
+}
 .circle-family.active .circle-route { animation-duration: 2.25s; }
 .circle-family.active .circle-extension { animation-duration: 1.35s; animation-delay: calc(var(--route-delay) + 1.6s); }
 .circle-family.active .circle-infinity-point { animation-delay: 4s; }
@@ -235,6 +248,7 @@
 @media (max-width: 540px) {
   .projective-narration, .ultra-reveal-narration { min-height: 128px; padding: 15px; font-size: 1.02rem; }
   .projective-subtitle.projective-narration { min-height: 142px; }
+  .projective-subtitle.final-focus { min-height: 190px; padding: 22px 18px; font-size: 1.48rem; }
   .ultra-reveal-actions { grid-template-columns: 1fr; }
   .ultra-reveal-modal { padding: 15px; }
   .celebration-content { padding: 34px 18px; }
