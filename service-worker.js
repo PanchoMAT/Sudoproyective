@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sudoproyectivo-1.0.2';
+const CACHE_NAME = 'sudoproyectivo-1.0.3';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -6,6 +6,7 @@ const CORE_ASSETS = [
   './projective.css',
   './projective-v08.css',
   './pwa.css',
+  './profile.css',
   './manifest.webmanifest',
   './assets/icon-192.svg',
   './assets/icon-512.svg',
@@ -13,6 +14,7 @@ const CORE_ASSETS = [
   './js/puzzles.js',
   './js/brand.js',
   './js/pwa.js',
+  './js/profile.js',
   './js/geometry.js',
   './js/ultra.js',
   './js/projective.js',
