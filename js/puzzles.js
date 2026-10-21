@@ -65,3 +65,8 @@ export const WORLDS = Array.from({ length: 6 }, (_, index) => {
 });
 
 export const DIFFICULTIES = ['Fácil', 'Intermedio', 'Difícil'];
+
+// La fase final se carga sólo en navegador y después de que el motor principal termina de inicializarse.
+if (typeof document !== 'undefined') {
+  setTimeout(() => import('./projective.js').catch((error) => console.error('No se pudo cargar el Proyecto final', error)), 0);
+}
