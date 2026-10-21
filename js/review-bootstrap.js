@@ -1,4 +1,6 @@
 (() => {
+  if (typeof window === 'undefined' || typeof location === 'undefined' || typeof Storage === 'undefined') return;
+
   const params = new URLSearchParams(location.search);
   if (params.get('review') !== '1') return;
 
