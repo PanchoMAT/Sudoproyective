@@ -1,3 +1,4 @@
+import './review-bootstrap.js';
 import route1 from './data/route1.js';
 import route2 from './data/route2.js';
 import route3 from './data/route3.js';
@@ -68,5 +69,12 @@ export const DIFFICULTIES = ['Fácil', 'Intermedio', 'Difícil'];
 
 // La fase final se carga sólo en navegador y después de que el motor principal termina de inicializarse.
 if (typeof document !== 'undefined') {
-  setTimeout(() => import('./projective.js').catch((error) => console.error('No se pudo cargar el Proyecto final', error)), 0);
+  setTimeout(async () => {
+    try {
+      await import('./projective.js');
+      if (window.__SUDOP_REVIEW__) await import('./review.js');
+    } catch (error) {
+      console.error('No se pudo cargar la fase final de Sudoproyective', error);
+    }
+  }, 0);
 }
