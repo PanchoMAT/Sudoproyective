@@ -7,6 +7,7 @@ import {
   ultraCompletedMap,
   allUltraComplete,
   credentialEarned,
+  finalRewardUnlocked,
   patchSave,
   readSave,
 } from './projective/storage.js';
@@ -19,8 +20,15 @@ const projectPanel = $('#projectivePanel');
 const gateButton = $('#projectiveRouteGate');
 const secretRewardSlot = $('#secretRewardSlot');
 const credentialDialog = $('#credentialDialog');
+const celebrationDialog = $('#projectiveCelebrationDialog');
 const lockDialog = $('#projectiveLockDialog');
 const unlockDialog = $('#projectiveUnlockDialog');
+
+const FINAL_REVEAL_ORDER = [1, 2, 3, 4, 5, 6, 0, 'inf'];
+const CONFETTI_COLORS = ['#ff6b6b','#ffd43b','#69db7c','#4dabf7','#9775fa','#f783ac','#ffa94d','#70d6ff'];
+
+let projectiveNarrationTimer = null;
+let celebrationTimer = null;
 
 function showToast(message) {
   const toast = $('#toast');
@@ -31,22 +39,52 @@ function showToast(message) {
   showToast.timer = setTimeout(() => toast.classList.add('hidden'), 2900);
 }
 
+function typeProjectiveNarration(text) {
+  const target = $('#projectiveSubtitle');
+  if (!target) return;
+  if (projectiveNarrationTimer) clearInterval(projectiveNarrationTimer);
+  projectiveNarrationTimer = null;
+  target.classList.remove('typing');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduced) {
+    target.textContent = text;
+    return;
+  }
+  const words = text.split(/\s+/);
+  let index = 0;
+  target.textContent = '';
+  target.classList.add('typing');
+  projectiveNarrationTimer = setInterval(() => {
+    target.textContent += `${index ? ' ' : ''}${words[index++]}`;
+    if (index >= words.length) {
+      clearInterval(projectiveNarrationTimer);
+      projectiveNarrationTimer = null;
+      target.classList.remove('typing');
+    }
+  }, 74);
+}
+
 function renderSecretReward() {
   if (!secretRewardSlot) return;
   const earned = credentialEarned();
+  const revealed = earned || finalRewardUnlocked();
   secretRewardSlot.innerHTML = `
-    <article class="secret-reward ${earned ? 'earned' : 'locked'}">
-      <div class="secret-emblem">${earned ? '◇' : '?'}</div>
+    <article class="secret-reward ${revealed ? 'earned' : 'locked'}">
+      <div class="secret-emblem">${revealed ? '◇' : '?'}</div>
       <div>
         <p class="eyebrow">Distinción especial</p>
-        <strong>${earned ? 'Trofeo Proyectivo' : 'Recompensa oculta'}</strong>
+        <strong>${revealed ? 'Trofeo Proyectivo' : 'Recompensa oculta'}</strong>
         <p>${earned
           ? 'Has recibido una distinción que no pertenece al sistema normal de trofeos.'
-          : 'Existe una recompensa más allá del camino habitual. Su naturaleza permanece oculta.'}</p>
+          : revealed
+            ? 'Completaste la construcción de PG(2,7). Tu certificado proyectivo está listo.'
+            : 'Existe una recompensa más allá del camino habitual. Su naturaleza permanece oculta.'}</p>
       </div>
       ${earned
         ? '<button id="openCredentialFromRewards" class="small-btn secret-open">Ver credencial</button>'
-        : '<span class="secret-state">???</span>'}
+        : revealed
+          ? '<span class="secret-state">DESBLOQUEADO</span>'
+          : '<span class="secret-state">???</span>'}
     </article>`;
   $('#openCredentialFromRewards')?.addEventListener('click', () => credentialDialog?.showModal());
 }
@@ -141,12 +179,6 @@ function closeProjectivePanel() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-const FAMILY_TEXT = DIRECTIONS.map((direction) => {
-  if (direction.key === 0) return 'Comenzamos con las 7 filas: son la dirección m = 0. Sus siete rectas reciben el primer punto del infinito.';
-  if (direction.key === 'inf') return 'Terminamos las direcciones afines con las 7 columnas: la dirección vertical m = ∞. Aparece el octavo punto del infinito.';
-  return `Ahora se forma ${direction.short}: las 7 rectas de pendiente ${direction.key} se distinguen por color y se prolongan hacia un mismo punto del infinito.`;
-});
-
 let revealStage = -1;
 let revealTimer = null;
 let revealRunning = false;
@@ -158,6 +190,18 @@ function revealSvg() {
 function clearRevealTimer() {
   if (revealTimer) clearTimeout(revealTimer);
   revealTimer = null;
+  if (celebrationTimer) clearTimeout(celebrationTimer);
+  celebrationTimer = null;
+}
+
+function familyIndexFor(direction) {
+  return DIRECTIONS.findIndex((item) => String(item.key) === String(direction));
+}
+
+function activateDirection(direction) {
+  const index = familyIndexFor(direction);
+  if (index < 0) return;
+  revealSvg()?.querySelector(`.circle-family-${index}`)?.classList.add('active');
 }
 
 function prepareReveal() {
@@ -172,7 +216,30 @@ function prepareReveal() {
   $('#awardCredentialBtn').textContent = 'Completa la construcción';
   $('#projectiveNextStageBtn').disabled = false;
   $('#projectiveNextStageBtn').textContent = 'Siguiente etapa';
-  $('#projectiveSubtitle').textContent = 'Los ocho dibujos representan las ocho direcciones del mismo plano afín de 49 puntos.';
+  typeProjectiveNarration('Preparando nuevamente las construcciones que descubriste en los seis desafíos.');
+}
+
+function populateCelebration() {
+  const container = $('#celebrationConfetti');
+  if (!container) return;
+  container.innerHTML = '';
+  for (let i = 0; i < 76; i++) {
+    const piece = document.createElement('span');
+    piece.className = 'confetti-piece';
+    piece.style.setProperty('--x', `${Math.round(Math.random() * 100)}%`);
+    piece.style.setProperty('--delay', `${(-Math.random() * 3.8).toFixed(2)}s`);
+    piece.style.setProperty('--duration', `${(3.7 + Math.random() * 2.8).toFixed(2)}s`);
+    piece.style.setProperty('--rot', `${Math.round(Math.random() * 180)}deg`);
+    piece.style.setProperty('--drift', `${Math.round(-70 + Math.random() * 140)}px`);
+    piece.style.setProperty('--color', CONFETTI_COLORS[i % CONFETTI_COLORS.length]);
+    container.appendChild(piece);
+  }
+}
+
+function showFinalCelebration() {
+  if (!celebrationDialog) return;
+  populateCelebration();
+  if (!celebrationDialog.open) celebrationDialog.showModal();
 }
 
 function finishReveal() {
@@ -184,17 +251,24 @@ function finishReveal() {
   $('#spotItCard').classList.remove('hidden');
   $('#projectiveNextStageBtn').disabled = true;
   $('#projectiveNextStageBtn').textContent = 'Construcción completa';
+  patchSave({ projectiveFinalRewardUnlocked: true });
+  renderSecretReward();
   const award = $('#awardCredentialBtn');
   award.disabled = false;
-  award.textContent = credentialEarned() ? 'Ver Trofeo Proyectivo' : 'Recibir distinción final';
-  $('#projectiveSubtitle').innerHTML = '<strong>PG(2,7) está completo.</strong> Tenemos 57 puntos y 57 rectas. La geometría oculta de Sudoproyective queda revelada.';
+  award.textContent = credentialEarned() ? 'Ver certificado' : 'Obtener certificado';
+  typeProjectiveNarration('Al añadir la recta del infinito, completaste el plano proyectivo PG(2,7). La geometría oculta de Sudoproyective queda revelada.');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  celebrationTimer = setTimeout(showFinalCelebration, reduced ? 80 : 3000);
 }
 
 function stageDuration(stage) {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return 80;
-  if (stage === 0) return 2200;
-  if (stage >= 1 && stage <= 8) return 3900;
-  if (stage === 9) return 4800;
+  if (stage === 0) return 5600;
+  if (stage === 1) return 5200;
+  if (stage >= 2 && stage <= 6) return 3600;
+  if (stage === 7) return 6500;
+  if (stage === 8) return 7000;
+  if (stage === 9) return 7600;
   return 1600;
 }
 
@@ -203,20 +277,33 @@ function applyRevealStage(stage) {
   if (!svg) return;
 
   if (stage === 0) {
-    $('#projectiveSubtitle').textContent = 'Cada mini-tablero representa la misma colección de 49 puntos, organizada según una de las ocho direcciones de AG(2,7).';
+    typeProjectiveNarration('Ahora que completaste los desafíos, veamos todas las construcciones nuevamente.');
     return;
   }
 
-  if (stage >= 1 && stage <= 8) {
-    const index = stage - 1;
-    svg.querySelector(`.circle-family-${index}`)?.classList.add('active');
-    $('#projectiveSubtitle').textContent = FAMILY_TEXT[index];
+  if (stage >= 1 && stage <= 6) {
+    activateDirection(FINAL_REVEAL_ORDER[stage - 1]);
+    if (stage === 1) {
+      typeProjectiveNarration('Cada desafío reveló una familia de siete rectas con una pendiente distinta. Vamos a reunir las seis familias en un mismo esquema.');
+    }
+    return;
+  }
+
+  if (stage === 7) {
+    activateDirection(0);
+    typeProjectiveNarration('Además, para construir todas las direcciones del tablero, durante todo el juego utilizamos también las rectas horizontales y verticales.');
+    return;
+  }
+
+  if (stage === 8) {
+    activateDirection('inf');
+    typeProjectiveNarration('Así que agregaremos esas dos direcciones que ya utilizamos: a las horizontales les diremos Ruta 0 y a las verticales, Ruta infinito.');
     return;
   }
 
   if (stage === 9) {
     svg.classList.add('show-rope');
-    $('#projectiveSubtitle').innerHTML = '<strong>Ya tenemos 8 puntos del infinito.</strong> Todos pertenecen a una misma recta. La cuerda que aparece es una representación esquemática de esa única recta: la recta del infinito.';
+    typeProjectiveNarration('Ahora tenemos ocho puntos del infinito. Agregaremos una última recta que pasa por todos ellos: la recta del infinito.');
     return;
   }
 
@@ -254,7 +341,7 @@ function nextRevealStage() {
 
 function awardCredential() {
   if (!allUltraComplete()) return;
-  if (!credentialEarned()) patchSave({ projectiveCredential: true });
+  if (!credentialEarned()) patchSave({ projectiveCredential: true, projectiveFinalRewardUnlocked: true });
   renderSecretReward();
   $('#credentialStatus').textContent = 'DISTINCIÓN MATEMÁTICA DESBLOQUEADA';
   credentialDialog.showModal();
@@ -268,6 +355,10 @@ $('#projectiveReplayBtn')?.addEventListener('click', replayReveal);
 $('#projectiveNextStageBtn')?.addEventListener('click', nextRevealStage);
 $('#awardCredentialBtn')?.addEventListener('click', awardCredential);
 $('#credentialCloseBtn')?.addEventListener('click', () => credentialDialog.close());
+$('#projectiveCelebrationContinue')?.addEventListener('click', () => {
+  celebrationDialog?.close();
+  $('#projectiveSummary')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
 $('#unlockLaterBtn')?.addEventListener('click', () => unlockDialog.close());
 $('#unlockOpenBtn')?.addEventListener('click', () => { unlockDialog.close(); openProjectivePanel(); });
 
@@ -286,6 +377,7 @@ window.__SUDOP_PROJECTIVE__ = {
   beginReveal,
   replayReveal,
   nextRevealStage,
+  showCelebration: showFinalCelebration,
   render: renderProjective,
 };
 
