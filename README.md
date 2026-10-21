@@ -89,6 +89,23 @@ Cada ruta contiene 30 niveles y un máximo de 90★:
 
 El trofeo de platino exige oro en las seis rutas. El máximo global de la campaña permanece en `180 × 3 = 540★`. El Proyecto final no modifica ese total.
 
+## Modo Revisión
+
+La URL con `?review=1` activa una capa de prueba aislada para revisar el proyecto completo sin modificar el progreso real.
+
+Incluye:
+
+- acceso directo a cualquier Ruta 1–6 y Nivel 1–30;
+- botones para resolver automáticamente el tablero abierto o dejar una sola casilla pendiente;
+- simulación de 0/60, 59/60 y 60/60 niveles Difíciles completados;
+- acceso directo a cada Ultraexperto y simulación de 0/6 o 6/6 completados;
+- reproducción individual de las seis animaciones de familias de rectas;
+- inspección por etapas de los 49 puntos, 42 rectas diagonales, filas, columnas, `AG(2,7)`, puntos del infinito y recta del infinito;
+- reproducción de la secuencia completa `AG(2,7) → PG(2,7)`;
+- vista bloqueada de la recompensa `???` y vista directa de la credencial final.
+
+El modo revisión usa una copia temporal de `sudoproyective-v02` almacenada sólo en la sesión del navegador. Al abrir la app sin `?review=1`, se vuelve automáticamente al progreso real.
+
 ## Pruebas
 
 ```bash
