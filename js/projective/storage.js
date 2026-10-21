@@ -12,7 +12,7 @@ Storage.prototype.setItem = function(key, value) {
     try {
       const current = JSON.parse(nativeGetItem.call(this, key)) || {};
       const next = JSON.parse(value) || {};
-      for (const field of ['ultraCompleted', 'ultraLevels', 'projectiveCredential', 'projectiveUnlockSeen']) {
+      for (const field of ['ultraCompleted', 'ultraLevels', 'projectiveCredential', 'projectiveUnlockSeen', 'projectiveFinalRewardUnlocked']) {
         if (!(field in next) && field in current) next[field] = current[field];
       }
       value = JSON.stringify(next);
@@ -70,6 +70,10 @@ export function allUltraComplete() {
 
 export function credentialEarned() {
   return Boolean(readSave().projectiveCredential);
+}
+
+export function finalRewardUnlocked() {
+  return Boolean(readSave().projectiveFinalRewardUnlocked);
 }
 
 export function loadUltraState(item) {
