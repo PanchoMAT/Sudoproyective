@@ -1,4 +1,5 @@
 import './review-bootstrap.js';
+import './brand.js';
 import route1 from './data/route1.js';
 import route2 from './data/route2.js';
 import route3 from './data/route3.js';
@@ -77,7 +78,7 @@ if (typeof document !== 'undefined') {
         await import('./review-polish.js');
       }
     } catch (error) {
-      console.error('No se pudo cargar la fase final de Sudoproyective', error);
+      console.error('No se pudo cargar la fase final de SudoProyectivo', error);
     }
   }, 0);
 }
