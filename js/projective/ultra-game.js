@@ -1,7 +1,7 @@
 import { ULTRA_LEVELS } from '../ultra.js';
 import { SIZE, SYMBOLS, cellKey, makeConstraintSystem, routeCellsFor } from '../geometry.js';
 import { projectUnlocked, ultraComplete, loadUltraState, saveUltraState, markUltraComplete, allUltraComplete } from './storage.js';
-import { familySvg } from './visuals.js';
+import { ultraRevealSvg } from './visuals.js';
 
 const $ = (selector) => document.querySelector(selector);
 const ultraScreen = $('#ultraGameScreen');
@@ -23,6 +23,11 @@ const state = {
   undoStack: [],
   redoStack: [],
 };
+
+let revealTimers = [];
+let narrationTimer = null;
+let currentRevealItem = null;
+let previewOnly = false;
 
 function item() { return ULTRA_LEVELS[state.index]; }
 function system() { return makeConstraintSystem([item().slope]); }
@@ -74,6 +79,8 @@ export function startUltra(index) {
 
 function leaveUltra() {
   if (invalidDialog?.open) invalidDialog.close();
+  if (ultraVictoryDialog?.open) ultraVictoryDialog.close();
+  clearRevealTimers();
   saveProgress();
   stopTimer();
   ultraScreen.classList.remove('active');
@@ -233,15 +240,95 @@ function checkCompletion() {
   complete();
 }
 
+function clearRevealTimers() {
+  revealTimers.forEach(clearTimeout);
+  revealTimers = [];
+  if (narrationTimer) clearInterval(narrationTimer);
+  narrationTimer = null;
+}
+
+function typeNarration(text) {
+  const target = $('#ultraVictoryNarration');
+  if (!target) return;
+  if (narrationTimer) clearInterval(narrationTimer);
+  narrationTimer = null;
+  target.classList.remove('typing');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduced) {
+    target.textContent = text;
+    return;
+  }
+  const words = text.split(/\s+/);
+  let index = 0;
+  target.textContent = '';
+  target.classList.add('typing');
+  narrationTimer = setInterval(() => {
+    target.textContent += `${index ? ' ' : ''}${words[index++]}`;
+    if (index >= words.length) {
+      clearInterval(narrationTimer);
+      narrationTimer = null;
+      target.classList.remove('typing');
+    }
+  }, 72);
+}
+
+function scheduleReveal(callback, delay) {
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const timer = setTimeout(callback, reduced ? Math.min(90, delay * .02) : delay);
+  revealTimers.push(timer);
+}
+
+function runUltraReveal(current, { preview = false } = {}) {
+  clearRevealTimers();
+  currentRevealItem = current;
+  previewOnly = preview;
+  const slope = current.slope;
+  const graphic = $('#ultraFamilyGraphic');
+  const continueButton = $('#ultraVictoryContinue');
+  $('#ultraVictoryTitle').textContent = `Ruta ${slope} · de sudoku a geometría`;
+  graphic.innerHTML = ultraRevealSvg(current.solution, slope);
+  const svg = graphic.querySelector('.ultra-reveal-svg');
+  continueButton.disabled = true;
+  continueButton.textContent = 'Observa la construcción…';
+
+  typeNarration(`Completaste el desafío de Ruta ${slope}.`);
+
+  scheduleReveal(() => {
+    svg?.classList.add('phase-points');
+    typeNarration('En cada una de las siete rutas, los valores son distintos. Ahora los números dejan de ser lo importante: conservamos solamente las posiciones del tablero.');
+  }, 3200);
+
+  scheduleReveal(() => {
+    svg?.classList.add('phase-lines');
+    typeNarration(`Al unir las posiciones de cada ruta aparecen siete rectas. Todas tienen inclinación —o pendiente— ${slope}.`);
+  }, 7900);
+
+  scheduleReveal(() => {
+    svg?.classList.add('phase-infinity');
+    typeNarration(`En el plano proyectivo, todas las rectas con pendiente ${slope} se encuentran en un nuevo punto. Lo llamaremos P_${slope}.`);
+  }, 13300);
+
+  scheduleReveal(() => {
+    svg?.classList.add('phase-complete');
+    continueButton.disabled = false;
+    continueButton.textContent = preview ? 'Cerrar vista previa' : 'Continuar';
+  }, 19400);
+
+  if (!ultraVictoryDialog.open) ultraVictoryDialog.showModal();
+}
+
 function complete() {
   stopTimer();
   const current=item();
   markUltraComplete(current);
-  $('#ultraVictoryTitle').textContent=`Dirección ${current.slope} descubierta`;
-  $('#ultraVictoryText').textContent=`Has revelado las siete rectas de pendiente ${current.slope}. Esta familia será parte de la construcción final.`;
-  $('#ultraFamilyGraphic').innerHTML=familySvg(current.slope,{compact:false,animated:true});
-  ultraVictoryDialog.showModal();
+  runUltraReveal(current, { preview: false });
   window.dispatchEvent(new CustomEvent('sudoproyective:projective-change'));
+}
+
+export function previewUltraReveal(slope) {
+  const current = ULTRA_LEVELS.find((entry) => entry.slope === Number(slope));
+  if (!current) return;
+  runUltraReveal(current, { preview: true });
 }
 
 function startTimer() {
@@ -273,9 +360,18 @@ $('#ultraRoutesBtn')?.addEventListener('click',()=>{state.routesVisible=!state.r
 $('#ultraEraseBtn')?.addEventListener('click',erase);
 $('#ultraUndoBtn')?.addEventListener('click',undo);
 $('#ultraRedoBtn')?.addEventListener('click',redo);
+$('#ultraVictoryReplay')?.addEventListener('click',()=>{ if (currentRevealItem) runUltraReveal(currentRevealItem, { preview: previewOnly }); });
 $('#ultraVictoryContinue')?.addEventListener('click',()=>{
+  if ($('#ultraVictoryContinue').disabled) return;
+  clearRevealTimers();
   ultraVictoryDialog.close();
+  if (previewOnly) {
+    previewOnly = false;
+    return;
+  }
   leaveUltra();
   window.dispatchEvent(new CustomEvent('sudoproyective:ultra-return',{detail:{allDone:allUltraComplete()}}));
 });
 window.addEventListener('beforeunload',saveProgress);
+
+window.__SUDOP_ULTRA_REVEAL__ = { preview: previewUltraReveal };
