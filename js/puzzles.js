@@ -1,5 +1,6 @@
 import './review-bootstrap.js';
 import './brand.js';
+import './pwa.js';
 import route1 from './data/route1.js';
 import route2 from './data/route2.js';
 import route3 from './data/route3.js';
