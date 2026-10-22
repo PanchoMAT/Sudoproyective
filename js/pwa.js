@@ -1,6 +1,10 @@
+import { APP_VERSION } from './brand.js';
+
 const $ = (selector) => document.querySelector(selector);
 
 let deferredInstallPrompt = null;
+let serviceWorkerRegistration = null;
+let refreshingAfterUpdate = false;
 
 function isIOS() {
   return /iphone|ipad|ipod/i.test(navigator.userAgent)
@@ -58,6 +62,22 @@ function ensureHeadMetadata() {
   }
 }
 
+function ensureUpdateBanner() {
+  if ($('#appUpdateBanner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'appUpdateBanner';
+  banner.className = 'app-update-banner hidden';
+  banner.setAttribute('role', 'status');
+  banner.innerHTML = `
+    <div>
+      <strong>Nueva versión disponible</strong>
+      <small>Hay una actualización de SudoProyectivo lista para instalar.</small>
+    </div>
+    <button id="applyUpdateBtn" type="button">Actualizar ahora</button>`;
+  document.body.appendChild(banner);
+  $('#applyUpdateBtn')?.addEventListener('click', applyWaitingUpdate);
+}
+
 function ensureInstallUI() {
   const hub = $('#hubScreen');
   const rewards = $('#rewardsPanel');
@@ -81,6 +101,13 @@ function ensureInstallUI() {
         </div>
         <div id="installAppStatus" class="install-status waiting" role="status">Comprobando las opciones de instalación de este dispositivo…</div>
         <button id="installAppBtn" class="primary-btn" type="button" disabled>Preparando instalación…</button>
+      </div>
+
+      <div class="info-card update-card">
+        <strong>Actualizaciones</strong>
+        <p>Versión actual: <strong id="installedAppVersion">${APP_VERSION}</strong></p>
+        <div id="updateAppStatus" class="update-status">SudoProyectivo comprobará automáticamente si hay una versión nueva.</div>
+        <button id="checkUpdateBtn" class="secondary-btn" type="button">Buscar actualización</button>
       </div>
 
       <div class="info-card">
@@ -126,6 +153,28 @@ function setStatus(message, kind = 'waiting') {
   status.textContent = message;
   status.classList.remove('waiting', 'installed');
   if (kind) status.classList.add(kind);
+}
+
+function setUpdateStatus(message, available = false) {
+  const status = $('#updateAppStatus');
+  if (status) {
+    status.textContent = message;
+    status.classList.toggle('available', available);
+  }
+}
+
+function showUpdateAvailable() {
+  ensureUpdateBanner();
+  $('#appUpdateBanner')?.classList.remove('hidden');
+  setUpdateStatus('Hay una nueva versión lista. Pulsa “Actualizar ahora”.', true);
+  const checkButton = $('#checkUpdateBtn');
+  if (checkButton) checkButton.textContent = 'Actualizar ahora';
+}
+
+function hideUpdateAvailable() {
+  $('#appUpdateBanner')?.classList.add('hidden');
+  const checkButton = $('#checkUpdateBtn');
+  if (checkButton) checkButton.textContent = 'Buscar actualización';
 }
 
 function renderInstallState() {
@@ -174,12 +223,101 @@ async function promptInstall() {
   renderInstallState();
 }
 
-async function registerServiceWorker() {
-  if (!('serviceWorker' in navigator)) return;
+function watchInstallingWorker(worker, registration) {
+  if (!worker) return;
+  worker.addEventListener('statechange', () => {
+    if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+      serviceWorkerRegistration = registration;
+      showUpdateAvailable();
+    }
+  });
+}
+
+async function checkForUpdate() {
+  const button = $('#checkUpdateBtn');
+  if (!serviceWorkerRegistration) {
+    setUpdateStatus('El sistema de actualización todavía se está iniciando.');
+    return;
+  }
+
+  if (serviceWorkerRegistration.waiting) {
+    showUpdateAvailable();
+    return;
+  }
+
+  if (button) {
+    button.disabled = true;
+    button.textContent = 'Buscando…';
+  }
+  setUpdateStatus('Buscando una versión nueva…');
+
   try {
-    await navigator.serviceWorker.register('./service-worker.js', { scope: './' });
+    await serviceWorkerRegistration.update();
+    if (serviceWorkerRegistration.waiting) {
+      showUpdateAvailable();
+    } else {
+      setUpdateStatus(`SudoProyectivo ${APP_VERSION} está actualizado.`);
+      if (button) button.textContent = 'Buscar actualización';
+    }
+  } catch {
+    setUpdateStatus('No se pudo comprobar la actualización. Revisa tu conexión e inténtalo de nuevo.');
+    if (button) button.textContent = 'Buscar actualización';
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
+function applyWaitingUpdate() {
+  const waiting = serviceWorkerRegistration?.waiting;
+  if (waiting) {
+    waiting.postMessage({ type: 'SKIP_WAITING' });
+    setUpdateStatus('Actualizando SudoProyectivo…');
+    return;
+  }
+
+  // Si el navegador ya activó el nuevo worker entre la detección y el toque,
+  // una recarga basta para entrar a la nueva versión.
+  window.location.reload();
+}
+
+async function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) {
+    setUpdateStatus('Este navegador no ofrece actualizaciones PWA automáticas.');
+    return;
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.register('./service-worker.js', {
+      scope: './',
+      updateViaCache: 'none',
+    });
+    serviceWorkerRegistration = registration;
     await navigator.serviceWorker.ready;
+
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (refreshingAfterUpdate) return;
+      refreshingAfterUpdate = true;
+      window.location.reload();
+    });
+
+    if (registration.waiting && navigator.serviceWorker.controller) {
+      showUpdateAvailable();
+    }
+
+    watchInstallingWorker(registration.installing, registration);
+    registration.addEventListener('updatefound', () => {
+      watchInstallingWorker(registration.installing, registration);
+    });
+
+    setUpdateStatus(`SudoProyectivo ${APP_VERSION} está actualizado.`);
+    await registration.update();
+    if (registration.waiting && navigator.serviceWorker.controller) showUpdateAvailable();
+
+    window.setInterval(() => {
+      registration.update().catch(() => {});
+    }, 15 * 60 * 1000);
   } catch (error) {
+    setUpdateStatus('No se pudo iniciar el sistema de actualización.');
     console.warn('No se pudo activar el modo offline de SudoProyectivo', error);
   }
 }
@@ -198,7 +336,12 @@ if (typeof document !== 'undefined') {
 
   ensureHeadMetadata();
   ensureInstallUI();
+  ensureUpdateBanner();
   $('#installAppBtn')?.addEventListener('click', promptInstall);
+  $('#checkUpdateBtn')?.addEventListener('click', () => {
+    if (serviceWorkerRegistration?.waiting) applyWaitingUpdate();
+    else checkForUpdate();
+  });
   renderInstallState();
   registerServiceWorker();
 }
