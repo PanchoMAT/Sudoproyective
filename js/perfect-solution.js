@@ -15,6 +15,7 @@ const STORAGE_KEY = 'sudoproyectivo-v02';
 const routeData = [route1, route2, route3, route4, route5, route6];
 const nonlinearData = [nonlinear1, nonlinear2, nonlinear3, nonlinear4, nonlinear5, nonlinear6];
 let activeLevel = null;
+let activeLevelPerfect = false;
 let annotateScheduled = false;
 
 function parseGrid(text) {
@@ -49,6 +50,11 @@ function readBestStars() {
   } catch {
     return {};
   }
+}
+
+function rowHasPerfectMark(row) {
+  const stars = row?.querySelector('.level-row-stars')?.textContent?.trim() || '';
+  return stars.startsWith('★★★');
 }
 
 function activeWorldFromTabs() {
@@ -86,6 +92,12 @@ function currentLevel() {
   const gameScreen = document.querySelector('#gameScreen');
   if (!gameScreen?.classList.contains('active')) return null;
   return activeLevel || levelFromScreenFallback();
+}
+
+function currentLevelUnlocked(level) {
+  if (!level) return false;
+  if (activeLevel && activeLevel.id === level.id && activeLevelPerfect) return true;
+  return solutionUnlocked(readBestStars(), level.id);
 }
 
 function ensureStyles() {
@@ -212,9 +224,7 @@ function renderSolution(level) {
 
 function openCurrentSolution() {
   const level = currentLevel();
-  if (!level) return;
-  const bestStars = readBestStars();
-  if (!solutionUnlocked(bestStars, level.id)) return;
+  if (!level || !currentLevelUnlocked(level)) return;
 
   renderSolution(level);
   const dialog = document.querySelector('#perfectSolutionDialog');
@@ -227,22 +237,19 @@ function refreshAvailability() {
   if (!bar) return;
 
   const level = currentLevel();
-  const bestStars = readBestStars();
-  const available = Boolean(level && solutionUnlocked(bestStars, level.id));
+  const available = currentLevelUnlocked(level);
   bar.classList.toggle('hidden', !available);
-  if (available) bar.dataset.levelId = level.id;
+  if (available && level) bar.dataset.levelId = level.id;
   else delete bar.dataset.levelId;
 }
 
 function annotateLevelRows() {
   annotateScheduled = false;
-  const bestStars = readBestStars();
   document.querySelectorAll('.level-row').forEach((row) => {
-    const level = levelFromRow(row);
     const label = row.querySelector('.level-row-label');
-    if (!level || !label) return;
+    if (!label) return;
     let badge = label.querySelector('.perfect-solution-badge');
-    const unlocked = solutionUnlocked(bestStars, level.id);
+    const unlocked = rowHasPerfectMark(row);
     if (unlocked && !badge) {
       badge = document.createElement('small');
       badge.className = 'perfect-solution-badge';
@@ -265,6 +272,7 @@ function bindNavigationTracking() {
     const row = event.target.closest?.('.level-row');
     if (row) {
       activeLevel = levelFromRow(row);
+      activeLevelPerfect = rowHasPerfectMark(row);
       setTimeout(refreshAvailability, 0);
       return;
     }
@@ -273,6 +281,7 @@ function bindNavigationTracking() {
       const current = activeLevel || levelFromScreenFallback();
       if (current) {
         activeLevel = LEVELS.find((item) => item.world === current.world && item.localNumber === current.localNumber + 1) || null;
+        activeLevelPerfect = activeLevel ? solutionUnlocked(readBestStars(), activeLevel.id) : false;
       }
       setTimeout(refreshAvailability, 0);
       return;
@@ -280,6 +289,7 @@ function bindNavigationTracking() {
 
     if (event.target.closest?.('#tutorialBtn')) {
       activeLevel = null;
+      activeLevelPerfect = false;
       setTimeout(refreshAvailability, 0);
       return;
     }
@@ -301,7 +311,10 @@ function bindScreenObservers() {
   }
   if (title) {
     new MutationObserver(() => {
-      if (!activeLevel) activeLevel = levelFromScreenFallback();
+      if (!activeLevel) {
+        activeLevel = levelFromScreenFallback();
+        activeLevelPerfect = activeLevel ? solutionUnlocked(readBestStars(), activeLevel.id) : false;
+      }
       refreshAvailability();
     }).observe(title, { childList: true, characterData: true, subtree: true });
   }
