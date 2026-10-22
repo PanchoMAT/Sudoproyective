@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sudoproyectivo-1.0.4';
+const CACHE_NAME = 'sudoproyectivo-1.1.0';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -12,6 +12,7 @@ const CORE_ASSETS = [
   './assets/icon-512.svg',
   './js/app.js',
   './js/puzzles.js',
+  './js/campaign-migration.js',
   './js/brand.js',
   './js/pwa.js',
   './js/profile.js',
@@ -27,7 +28,13 @@ const CORE_ASSETS = [
   './js/data/route3.js',
   './js/data/route4.js',
   './js/data/route5.js',
-  './js/data/route6.js'
+  './js/data/route6.js',
+  './js/data/nonlinear/route1.js',
+  './js/data/nonlinear/route2.js',
+  './js/data/nonlinear/route3.js',
+  './js/data/nonlinear/route4.js',
+  './js/data/nonlinear/route5.js',
+  './js/data/nonlinear/route6.js'
 ];
 
 self.addEventListener('install', (event) => {
