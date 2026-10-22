@@ -1,4 +1,5 @@
 import './review-bootstrap.js';
+import './campaign-migration.js';
 import './brand.js';
 import './pwa.js';
 import './profile.js';
