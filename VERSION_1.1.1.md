@@ -9,9 +9,8 @@ Cuando un nivel tiene una mejor marca de **★★★**, al volver a entrar apare
 La solución:
 
 - se muestra en modo sólo lectura;
-- no modifica el nuevo intento del jugador;
-- no consume pistas ni estrellas;
-- no modifica el cronómetro ni el progreso;
+- no modifica pistas, estrellas ni progreso;
+- no cambia la solución ni el contenido del nuevo intento;
 - distingue visualmente las pistas originales de las casillas que debían resolverse.
 
 Los niveles con 0, 1 o 2 estrellas no muestran esta opción.
