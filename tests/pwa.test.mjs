@@ -23,9 +23,18 @@ for (const icon of manifest.icons) {
 assert.match(pwaCode, /beforeinstallprompt/);
 assert.match(pwaCode, /appinstalled/);
 assert.match(pwaCode, /serviceWorker\.register/);
+assert.match(pwaCode, /updateViaCache:\s*'none'/, 'El service worker debe comprobarse sin reutilizar una copia HTTP antigua');
+assert.match(pwaCode, /registration\.update\(\)/, 'Debe existir comprobación explícita de actualizaciones');
+assert.match(pwaCode, /controllerchange/, 'Debe recargar cuando cambia el controlador');
+assert.match(pwaCode, /Actualizar ahora/, 'Debe existir una acción visible para actualizar');
+assert.match(pwaCode, /Buscar actualización/, 'Debe existir comprobación manual desde la app');
+assert.match(pwaCode, /SKIP_WAITING/, 'El botón debe poder activar el worker en espera');
 assert.match(pwaCode, /Añadir a pantalla de inicio/);
 assert.match(puzzles, /import '\.\/pwa\.js';/);
 assert.match(serviceWorker, /CACHE_NAME/);
+assert.match(serviceWorker, /sudoproyectivo-1\.1\.3/);
+assert.match(serviceWorker, /SKIP_WAITING/);
+assert.match(serviceWorker, /clients\.claim/);
 assert.match(serviceWorker, /manifest\.webmanifest/);
 assert.match(serviceWorker, /js\/app\.js/);
 
