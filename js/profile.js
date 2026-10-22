@@ -10,6 +10,18 @@ export function profileDisplayName(profile = {}) {
   return name || nickname || 'Jugador';
 }
 
+export function profileGreetingName(profile = {}) {
+  const nickname = clean(profile.nickname, 24);
+  const name = clean(profile.name, 40);
+  if (nickname) return nickname;
+  if (name) return name.split(/\s+/)[0];
+  return 'Jugador';
+}
+
+export function profileHasIdentity(profile = {}) {
+  return Boolean(clean(profile.name, 40) || clean(profile.nickname, 24));
+}
+
 function loadProfile() {
   try {
     const raw = JSON.parse(localStorage.getItem(PROFILE_KEY)) || {};
@@ -23,6 +35,8 @@ function loadProfile() {
 }
 
 let profile = { name: '', nickname: '' };
+let allowCertificateOnce = false;
+let pendingCredentialButton = null;
 
 function saveProfile(next) {
   profile = {
@@ -31,6 +45,7 @@ function saveProfile(next) {
   };
   localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
   refreshProfileUI();
+  refreshJourneyTitle();
   refreshCredentialIdentity();
   window.dispatchEvent(new CustomEvent('sudoproyectivo:profilechange', { detail: { ...profile } }));
 }
@@ -69,13 +84,13 @@ function ensureProfileUI() {
           <input id="profileName" type="text" maxlength="40" autocomplete="name" placeholder="Ej.: Francisco Alegría">
 
           <label for="profileNickname">Apodo</label>
-          <input id="profileNickname" type="text" maxlength="24" autocomplete="nickname" placeholder="Ej.: PanchoMAT">
+          <input id="profileNickname" type="text" maxlength="24" autocomplete="nickname" placeholder="Ej.: Pancho">
         </div>
 
         <div class="profile-preview-card">
-          <span>Así aparecerás en tu certificado</span>
+          <span>SudoProyectivo se referirá a ti como</span>
           <strong id="profilePreviewName">Jugador</strong>
-          <small>Se usa primero el nombre; si está vacío, el apodo; y si no completas ninguno, aparecerá “Jugador”.</small>
+          <small>Si escribes un apodo, lo usaremos para personalizar el juego. Si no, usaremos tu nombre.</small>
         </div>
 
         <div class="profile-actions">
@@ -86,8 +101,8 @@ function ensureProfileUI() {
       </div>
 
       <div class="info-card">
-        <strong>Un detalle personal al final</strong>
-        <p>Cuando completes la construcción de <strong>PG(2,7)</strong>, el Trofeo Proyectivo mostrará tu identidad elegida. Puedes cambiarla cuando quieras y el certificado se actualizará.</p>
+        <strong>Tu juego, un poco más personal</strong>
+        <p>Puedes cambiar tu nombre o apodo cuando quieras. SudoProyectivo lo utilizará en saludos y mensajes personales sin crear una cuenta ni enviar estos datos a ningún servidor.</p>
       </div>`;
     hub.insertBefore(panel, rewards);
   }
@@ -101,6 +116,29 @@ function ensureProfileUI() {
     const installButton = document.querySelector('#installNavBtn');
     nav.insertBefore(button, installButton || null);
   }
+
+  if (!document.querySelector('#certificateIdentityDialog')) {
+    document.body.insertAdjacentHTML('beforeend', `
+      <dialog id="certificateIdentityDialog" class="modal certificate-identity-modal">
+        <p class="eyebrow">Un último detalle</p>
+        <h2>¿Cómo quieres aparecer?</h2>
+        <p>Hasta ahora juegas como <strong>Jugador</strong>. Si quieres, escribe un nombre o apodo para personalizar tu distinción. También puedes continuar como Jugador.</p>
+        <label for="certificateIdentityInput">Nombre o apodo</label>
+        <input id="certificateIdentityInput" type="text" maxlength="40" placeholder="Ej.: Pancho">
+        <div class="modal-actions certificate-identity-actions">
+          <button id="certificateUsePlayerBtn" class="secondary-btn" type="button">Continuar como Jugador</button>
+          <button id="certificateSaveIdentityBtn" class="primary-btn" type="button">Guardar y continuar</button>
+        </div>
+      </dialog>`);
+  }
+}
+
+function refreshJourneyTitle() {
+  const title = document.querySelector('#levelsPanel .compact-hero h2');
+  if (!title) return;
+  title.textContent = profileHasIdentity(profile)
+    ? `Tu recorrido, ${profileGreetingName(profile)}`
+    : 'Tu recorrido';
 }
 
 function refreshProfileUI() {
@@ -109,13 +147,13 @@ function refreshProfileUI() {
   const preview = document.querySelector('#profilePreviewName');
   if (nameInput && document.activeElement !== nameInput) nameInput.value = profile.name;
   if (nicknameInput && document.activeElement !== nicknameInput) nicknameInput.value = profile.nickname;
-  if (preview) preview.textContent = profileDisplayName(profile);
+  if (preview) preview.textContent = profileGreetingName(profile);
 }
 
 function refreshLivePreview() {
   const preview = document.querySelector('#profilePreviewName');
   if (!preview) return;
-  preview.textContent = profileDisplayName({
+  preview.textContent = profileGreetingName({
     name: document.querySelector('#profileName')?.value || '',
     nickname: document.querySelector('#profileNickname')?.value || '',
   });
@@ -151,10 +189,38 @@ export function refreshCredentialIdentity() {
   }
 }
 
+function continueToCredential() {
+  const button = pendingCredentialButton;
+  pendingCredentialButton = null;
+  allowCertificateOnce = true;
+  document.querySelector('#certificateIdentityDialog')?.close();
+  requestAnimationFrame(() => button?.click());
+}
+
+function interceptFirstCredential(event) {
+  const button = event.target.closest?.('#awardCredentialBtn');
+  if (!button || button.disabled) return;
+  if (!String(button.textContent).includes('Obtener certificado')) return;
+  if (profileHasIdentity(profile) || allowCertificateOnce) {
+    allowCertificateOnce = false;
+    refreshCredentialIdentity();
+    return;
+  }
+
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  pendingCredentialButton = button;
+  const input = document.querySelector('#certificateIdentityInput');
+  if (input) input.value = '';
+  document.querySelector('#certificateIdentityDialog')?.showModal();
+  setTimeout(() => input?.focus(), 80);
+}
+
 function initProfile() {
   profile = loadProfile();
   ensureProfileUI();
   refreshProfileUI();
+  refreshJourneyTitle();
 
   document.querySelector('#profileName')?.addEventListener('input', refreshLivePreview);
   document.querySelector('#profileNickname')?.addEventListener('input', refreshLivePreview);
@@ -164,7 +230,7 @@ function initProfile() {
       name: document.querySelector('#profileName')?.value || '',
       nickname: document.querySelector('#profileNickname')?.value || '',
     });
-    showSavedStatus(`✓ Perfil guardado como ${profileDisplayName(profile)}.`);
+    showSavedStatus(`✓ Perfil guardado. SudoProyectivo te llamará ${profileGreetingName(profile)}.`);
   });
 
   document.querySelector('#clearProfileBtn')?.addEventListener('click', () => {
@@ -174,15 +240,28 @@ function initProfile() {
     if (nameInput) nameInput.value = '';
     if (nicknameInput) nicknameInput.value = '';
     refreshLivePreview();
-    showSavedStatus('✓ El certificado mostrará “Jugador”.');
+    showSavedStatus('✓ Volverás a aparecer como Jugador.');
   });
 
-  // El diálogo del certificado se crea más tarde. Cualquier acción que lo abra
-  // pasa por un clic, así que actualizamos la identidad justo antes de sus handlers.
+  document.querySelector('#certificateUsePlayerBtn')?.addEventListener('click', continueToCredential);
+  document.querySelector('#certificateSaveIdentityBtn')?.addEventListener('click', () => {
+    const value = clean(document.querySelector('#certificateIdentityInput')?.value || '', 40);
+    if (value) saveProfile({ name: value, nickname: '' });
+    continueToCredential();
+  });
+  document.querySelector('#certificateIdentityInput')?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') document.querySelector('#certificateSaveIdentityBtn')?.click();
+  });
+
+  // Capturamos únicamente el primer intento de obtener la distinción, cuando aún
+  // no existe identidad. De este modo Perfil no revela anticipadamente el premio.
+  document.addEventListener('click', interceptFirstCredential, true);
   document.addEventListener('click', refreshCredentialIdentity, true);
 
   window.__SUDOP_PROFILE__ = {
     displayName: () => profileDisplayName(profile),
+    greetingName: () => profileGreetingName(profile),
+    hasIdentity: () => profileHasIdentity(profile),
     getProfile: () => ({ ...profile }),
     refreshCredential: refreshCredentialIdentity,
   };
