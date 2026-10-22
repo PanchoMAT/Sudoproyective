@@ -36,7 +36,7 @@ assert.doesNotMatch(perfectSolution, /from '\.\/puzzles\.js'/, 'El visor no debe
 assert.match(perfectSolution, /__SUDOP_SOLUTION_VIEWER_READY__/, 'El visor debe marcar su inicialización');
 assert.match(puzzles, /import '\.\/pwa\.js';/);
 assert.match(serviceWorker, /CACHE_NAME/);
-assert.match(serviceWorker, /sudoproyectivo-1\.1\.4/);
+assert.match(serviceWorker, /sudoproyectivo-1\.1\.5/);
 assert.match(serviceWorker, /SKIP_WAITING/);
 assert.match(serviceWorker, /clients\.claim/);
 assert.match(serviceWorker, /manifest\.webmanifest/);
