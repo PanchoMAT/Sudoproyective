@@ -51,16 +51,18 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys
-      .filter((key) => key !== CACHE_NAME && key.startsWith('sudoproyectivo-'))
-      .map((key) => caches.delete(key)));
+    const oldCaches = keys.filter((key) => key !== CACHE_NAME && key.startsWith('sudoproyectivo-'));
+    const upgradingExistingInstall = oldCaches.length > 0;
 
+    await Promise.all(oldCaches.map((key) => caches.delete(key)));
     await self.clients.claim();
 
-    // Esta versión fuerza una única navegación de los clientes ya abiertos para
-    // que reciban el nuevo pwa.js con el sistema de actualizaciones visible.
-    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    await Promise.all(clients.map((client) => client.navigate(client.url).catch(() => null)));
+    // Sólo las instalaciones que ya tenían una versión anterior reciben esta
+    // recarga de rescate. Una primera visita/instalación no se interrumpe.
+    if (upgradingExistingInstall) {
+      const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      await Promise.all(clients.map((client) => client.navigate(client.url).catch(() => null)));
+    }
   })());
 });
 
