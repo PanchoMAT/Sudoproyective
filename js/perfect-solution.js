@@ -1,6 +1,8 @@
 import { LEVELS } from './puzzles.js';
 
 const STORAGE_KEY = 'sudoproyectivo-v02';
+let activeLevel = null;
+let annotateScheduled = false;
 
 export function solutionUnlocked(bestStars = {}, levelId = '') {
   return Number(bestStars?.[levelId] || 0) >= 3;
@@ -15,7 +17,23 @@ function readBestStars() {
   }
 }
 
-function currentLevelFromScreen() {
+function activeWorldFromTabs() {
+  const text = document.querySelector('.route-tab.active span')?.textContent || '';
+  const match = text.match(/Ruta\s+(\d+)/i);
+  return match ? Number(match[1]) : null;
+}
+
+function levelFromRow(row) {
+  if (!row) return null;
+  const world = activeWorldFromTabs();
+  const text = row.querySelector('.level-row-label')?.textContent || '';
+  const match = text.match(/Nivel\s+(\d+)/i);
+  if (!world || !match) return null;
+  const localNumber = Number(match[1]);
+  return LEVELS.find((item) => item.world === world && item.localNumber === localNumber) || null;
+}
+
+function levelFromScreenFallback() {
   const gameScreen = document.querySelector('#gameScreen');
   if (!gameScreen?.classList.contains('active')) return null;
 
@@ -30,6 +48,12 @@ function currentLevelFromScreen() {
   return LEVELS.find((item) => item.world === world && item.localNumber === localNumber) || null;
 }
 
+function currentLevel() {
+  const gameScreen = document.querySelector('#gameScreen');
+  if (!gameScreen?.classList.contains('active')) return null;
+  return activeLevel || levelFromScreenFallback();
+}
+
 function ensureStyles() {
   if (document.querySelector('#perfectSolutionStyles')) return;
   const style = document.createElement('style');
@@ -40,7 +64,7 @@ function ensureStyles() {
       margin:10px 0 14px; padding:11px 13px; border-radius:14px;
       border:1px solid rgba(243,200,106,.34); background:rgba(243,200,106,.08);
     }
-    .perfect-solution-bar.hidden { display:none; }
+    .perfect-solution-bar.hidden { display:none !important; }
     .perfect-solution-copy { min-width:0; }
     .perfect-solution-copy strong { display:block; color:#f7d77f; font-size:.88rem; }
     .perfect-solution-copy small { display:block; margin-top:2px; color:var(--muted); line-height:1.35; }
@@ -48,6 +72,10 @@ function ensureStyles() {
       flex:0 0 auto; min-height:40px; border-radius:11px; padding:8px 12px;
       border:1px solid rgba(243,200,106,.48); background:rgba(243,200,106,.13);
       color:#fff2c7; font:inherit; font-weight:800; cursor:pointer;
+    }
+    .perfect-solution-badge {
+      display:block; margin-top:3px; color:#f7d77f; font-size:.68rem; font-weight:800;
+      letter-spacing:.01em;
     }
     .perfect-solution-dialog { width:min(94vw,520px); }
     .perfect-solution-heading { margin-bottom:14px; }
@@ -121,7 +149,11 @@ function ensureUI() {
     dialog.querySelector('#perfectSolutionCloseBtn')?.addEventListener('click', () => dialog.close());
   }
 
-  document.querySelector('#perfectSolutionOpenBtn')?.addEventListener('click', openCurrentSolution);
+  const openButton = document.querySelector('#perfectSolutionOpenBtn');
+  if (openButton && !openButton.dataset.bound) {
+    openButton.dataset.bound = '1';
+    openButton.addEventListener('click', openCurrentSolution);
+  }
 }
 
 function renderSolution(level) {
@@ -145,7 +177,7 @@ function renderSolution(level) {
 }
 
 function openCurrentSolution() {
-  const level = currentLevelFromScreen();
+  const level = currentLevel();
   if (!level) return;
   const bestStars = readBestStars();
   if (!solutionUnlocked(bestStars, level.id)) return;
@@ -156,23 +188,109 @@ function openCurrentSolution() {
 }
 
 function refreshAvailability() {
+  ensureUI();
   const bar = document.querySelector('#perfectSolutionBar');
   if (!bar) return;
 
-  const level = currentLevelFromScreen();
+  const level = currentLevel();
   const bestStars = readBestStars();
   const available = Boolean(level && solutionUnlocked(bestStars, level.id));
   bar.classList.toggle('hidden', !available);
+  if (available) {
+    bar.dataset.levelId = level.id;
+  } else {
+    delete bar.dataset.levelId;
+  }
+}
+
+function annotateLevelRows() {
+  annotateScheduled = false;
+  const bestStars = readBestStars();
+  document.querySelectorAll('.level-row').forEach((row) => {
+    const level = levelFromRow(row);
+    const label = row.querySelector('.level-row-label');
+    if (!level || !label) return;
+    let badge = label.querySelector('.perfect-solution-badge');
+    const unlocked = solutionUnlocked(bestStars, level.id);
+    if (unlocked && !badge) {
+      badge = document.createElement('small');
+      badge.className = 'perfect-solution-badge';
+      badge.textContent = 'Solución desbloqueada';
+      label.appendChild(badge);
+    } else if (!unlocked && badge) {
+      badge.remove();
+    }
+  });
+}
+
+function scheduleAnnotate() {
+  if (annotateScheduled) return;
+  annotateScheduled = true;
+  requestAnimationFrame(annotateLevelRows);
+}
+
+function bindNavigationTracking() {
+  document.addEventListener('click', (event) => {
+    const row = event.target.closest?.('.level-row');
+    if (row) {
+      activeLevel = levelFromRow(row);
+      setTimeout(refreshAvailability, 0);
+      return;
+    }
+
+    if (event.target.closest?.('#nextLevelBtn')) {
+      const current = activeLevel || levelFromScreenFallback();
+      if (current) {
+        activeLevel = LEVELS.find((item) => item.world === current.world && item.localNumber === current.localNumber + 1) || null;
+      }
+      setTimeout(refreshAvailability, 0);
+      return;
+    }
+
+    if (event.target.closest?.('#tutorialBtn')) {
+      activeLevel = null;
+      setTimeout(refreshAvailability, 0);
+      return;
+    }
+
+    if (event.target.closest?.('.route-tab') || event.target.closest?.('.nav-btn') || event.target.closest?.('#levelsBtn')) {
+      setTimeout(() => {
+        refreshAvailability();
+        scheduleAnnotate();
+      }, 0);
+    }
+  }, true);
+}
+
+function bindScreenObservers() {
+  const gameScreen = document.querySelector('#gameScreen');
+  const title = document.querySelector('#gameTitle');
+  if (gameScreen) {
+    new MutationObserver(refreshAvailability).observe(gameScreen, { attributes: true, attributeFilter: ['class'] });
+  }
+  if (title) {
+    new MutationObserver(() => {
+      if (!activeLevel) activeLevel = levelFromScreenFallback();
+      refreshAvailability();
+    }).observe(title, { childList: true, characterData: true, subtree: true });
+  }
+
+  const list = document.querySelector('#difficultySections');
+  if (list) {
+    new MutationObserver(scheduleAnnotate).observe(list, { childList: true, subtree: true });
+  }
 }
 
 function init() {
   ensureUI();
+  bindNavigationTracking();
+  bindScreenObservers();
   refreshAvailability();
-
-  document.addEventListener('click', () => {
-    setTimeout(refreshAvailability, 0);
+  scheduleAnnotate();
+  window.addEventListener('storage', () => {
+    refreshAvailability();
+    scheduleAnnotate();
   });
-  window.addEventListener('sudoproyectivo:progresschange', refreshAvailability);
 }
 
 if (typeof document !== 'undefined') init();
