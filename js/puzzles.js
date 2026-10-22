@@ -82,17 +82,18 @@ export const WORLDS = Array.from({ length: 6 }, (_, index) => {
 
 export const DIFFICULTIES = ['Fácil', 'Intermedio', 'Difícil'];
 
-// La fase final se carga sólo en navegador y después de que el motor principal termina de inicializarse.
+// Las capas complementarias se cargan sólo en navegador y después de que el motor principal termina de inicializarse.
 if (typeof document !== 'undefined') {
   setTimeout(async () => {
     try {
+      await import('./perfect-solution.js');
       await import('./projective.js');
       if (window.__SUDOP_REVIEW__) {
         await import('./review.js');
         await import('./review-polish.js');
       }
     } catch (error) {
-      console.error('No se pudo cargar la fase final de SudoProyectivo', error);
+      console.error('No se pudo cargar una capa complementaria de SudoProyectivo', error);
     }
   }, 0);
 }
