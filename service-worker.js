@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sudoproyectivo-1.1.3';
+const CACHE_NAME = 'sudoproyectivo-1.1.4';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -42,8 +42,6 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(CORE_ASSETS))
-      // Transición de rescate 1.1.2 -> 1.1.3: activa de inmediato para sacar
-      // a instalaciones que quedaron mostrando una versión anterior.
       .then(() => self.skipWaiting())
   );
 });
@@ -57,8 +55,6 @@ self.addEventListener('activate', (event) => {
     await Promise.all(oldCaches.map((key) => caches.delete(key)));
     await self.clients.claim();
 
-    // Sólo las instalaciones que ya tenían una versión anterior reciben esta
-    // recarga de rescate. Una primera visita/instalación no se interrumpe.
     if (upgradingExistingInstall) {
       const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
       await Promise.all(clients.map((client) => client.navigate(client.url).catch(() => null)));
