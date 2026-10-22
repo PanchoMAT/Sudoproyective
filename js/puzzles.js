@@ -8,8 +8,15 @@ import route3 from './data/route3.js';
 import route4 from './data/route4.js';
 import route5 from './data/route5.js';
 import route6 from './data/route6.js';
+import nonlinear1 from './data/nonlinear/route1.js';
+import nonlinear2 from './data/nonlinear/route2.js';
+import nonlinear3 from './data/nonlinear/route3.js';
+import nonlinear4 from './data/nonlinear/route4.js';
+import nonlinear5 from './data/nonlinear/route5.js';
+import nonlinear6 from './data/nonlinear/route6.js';
 
 const routeData = [route1, route2, route3, route4, route5, route6];
+const nonlinearData = [nonlinear1, nonlinear2, nonlinear3, nonlinear4, nonlinear5, nonlinear6];
 
 function parseGrid(text) {
   return Array.from({ length: 7 }, (_, row) =>
@@ -38,7 +45,11 @@ function routeDescription(slope) {
 
 const raw = routeData.flatMap((rows, index) => {
   const world = index + 1;
-  return rows.map(([id, localNumber, p, s]) => ({ id, world, localNumber, p, s }));
+  const replacement = nonlinearData[index];
+  return rows.map(([id, localNumber], levelIndex) => {
+    const [p, s] = replacement[levelIndex];
+    return { id, world, localNumber, p, s };
+  });
 });
 
 export const LEVELS = raw.map(({ id, world, localNumber, p, s }, index) => ({
