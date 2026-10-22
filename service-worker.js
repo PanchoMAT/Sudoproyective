@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sudoproyectivo-1.1.4';
+const CACHE_NAME = 'sudoproyectivo-1.1.5';
 const CORE_ASSETS = [
   './',
   './index.html',
