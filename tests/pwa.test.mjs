@@ -5,6 +5,7 @@ const manifest = JSON.parse(fs.readFileSync(new URL('../manifest.webmanifest', i
 const pwaCode = fs.readFileSync(new URL('../js/pwa.js', import.meta.url), 'utf8');
 const serviceWorker = fs.readFileSync(new URL('../service-worker.js', import.meta.url), 'utf8');
 const puzzles = fs.readFileSync(new URL('../js/puzzles.js', import.meta.url), 'utf8');
+const perfectSolution = fs.readFileSync(new URL('../js/perfect-solution.js', import.meta.url), 'utf8');
 
 assert.equal(manifest.name, 'SudoProyectivo');
 assert.equal(manifest.short_name, 'SudoProyectivo');
@@ -30,12 +31,16 @@ assert.match(pwaCode, /Actualizar ahora/, 'Debe existir una acción visible para
 assert.match(pwaCode, /Buscar actualización/, 'Debe existir comprobación manual desde la app');
 assert.match(pwaCode, /SKIP_WAITING/, 'El botón debe poder activar el worker en espera');
 assert.match(pwaCode, /Añadir a pantalla de inicio/);
+assert.match(pwaCode, /import '\.\/perfect-solution\.js';/, 'El visor de solución debe formar parte del arranque principal');
+assert.doesNotMatch(perfectSolution, /from '\.\/puzzles\.js'/, 'El visor no debe depender circularmente de puzzles.js');
+assert.match(perfectSolution, /__SUDOP_SOLUTION_VIEWER_READY__/, 'El visor debe marcar su inicialización');
 assert.match(puzzles, /import '\.\/pwa\.js';/);
 assert.match(serviceWorker, /CACHE_NAME/);
-assert.match(serviceWorker, /sudoproyectivo-1\.1\.3/);
+assert.match(serviceWorker, /sudoproyectivo-1\.1\.4/);
 assert.match(serviceWorker, /SKIP_WAITING/);
 assert.match(serviceWorker, /clients\.claim/);
 assert.match(serviceWorker, /manifest\.webmanifest/);
 assert.match(serviceWorker, /js\/app\.js/);
+assert.match(serviceWorker, /js\/perfect-solution\.js/);
 
 console.log('pwa.test.mjs: OK');
