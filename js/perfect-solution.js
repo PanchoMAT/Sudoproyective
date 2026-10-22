@@ -1,8 +1,42 @@
-import { LEVELS } from './puzzles.js';
+import route1 from './data/route1.js';
+import route2 from './data/route2.js';
+import route3 from './data/route3.js';
+import route4 from './data/route4.js';
+import route5 from './data/route5.js';
+import route6 from './data/route6.js';
+import nonlinear1 from './data/nonlinear/route1.js';
+import nonlinear2 from './data/nonlinear/route2.js';
+import nonlinear3 from './data/nonlinear/route3.js';
+import nonlinear4 from './data/nonlinear/route4.js';
+import nonlinear5 from './data/nonlinear/route5.js';
+import nonlinear6 from './data/nonlinear/route6.js';
 
 const STORAGE_KEY = 'sudoproyectivo-v02';
+const routeData = [route1, route2, route3, route4, route5, route6];
+const nonlinearData = [nonlinear1, nonlinear2, nonlinear3, nonlinear4, nonlinear5, nonlinear6];
 let activeLevel = null;
 let annotateScheduled = false;
+
+function parseGrid(text) {
+  return Array.from({ length: 7 }, (_, row) =>
+    Array.from({ length: 7 }, (_, col) => Number(text[row * 7 + col]))
+  );
+}
+
+const LEVELS = routeData.flatMap((rows, index) => {
+  const world = index + 1;
+  const replacement = nonlinearData[index];
+  return rows.map(([id, localNumber], levelIndex) => {
+    const [p, s] = replacement[levelIndex];
+    return {
+      id,
+      world,
+      localNumber,
+      puzzle: parseGrid(p),
+      solution: parseGrid(s),
+    };
+  });
+});
 
 export function solutionUnlocked(bestStars = {}, levelId = '') {
   return Number(bestStars?.[levelId] || 0) >= 3;
@@ -196,11 +230,8 @@ function refreshAvailability() {
   const bestStars = readBestStars();
   const available = Boolean(level && solutionUnlocked(bestStars, level.id));
   bar.classList.toggle('hidden', !available);
-  if (available) {
-    bar.dataset.levelId = level.id;
-  } else {
-    delete bar.dataset.levelId;
-  }
+  if (available) bar.dataset.levelId = level.id;
+  else delete bar.dataset.levelId;
 }
 
 function annotateLevelRows() {
@@ -287,6 +318,7 @@ function init() {
   bindScreenObservers();
   refreshAvailability();
   scheduleAnnotate();
+  window.__SUDOP_SOLUTION_VIEWER_READY__ = true;
   window.addEventListener('storage', () => {
     refreshAvailability();
     scheduleAnnotate();
