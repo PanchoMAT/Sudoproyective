@@ -109,7 +109,7 @@ function ensureUI() {
       <div class="perfect-solution-heading">
         <p class="eyebrow">Recompensa por 3 estrellas</p>
         <h2 id="perfectSolutionTitle">Solución</h2>
-        <p>Este tablero es sólo para consulta. No modifica tu nueva partida, tus pistas ni tu tiempo.</p>
+        <p>Este tablero es sólo para consulta. No modifica tus pistas, estrellas ni progreso.</p>
       </div>
       <div id="perfectSolutionGrid" class="perfect-solution-grid" role="grid" aria-label="Solución completa"></div>
       <div class="perfect-solution-legend" aria-hidden="true">
