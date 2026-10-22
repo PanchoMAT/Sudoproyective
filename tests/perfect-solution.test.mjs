@@ -11,6 +11,8 @@ assert.equal(solutionUnlocked({ levelA: 4 }, 'levelA'), true, 'la condición tol
 const code = fs.readFileSync(new URL('../js/perfect-solution.js', import.meta.url), 'utf8');
 assert.match(code, /levelFromRow/, 'el visor debe identificar directamente el nivel pulsado');
 assert.match(code, /MutationObserver/, 'el visor debe reaccionar a cambios de pantalla');
+assert.match(code, /rowHasPerfectMark/, 'el desbloqueo debe poder usar directamente las estrellas visibles');
+assert.match(code, /activeLevelPerfect/, 'la marca perfecta visible debe conservarse al entrar al nivel');
 assert.match(code, /Solución desbloqueada/, 'los niveles perfectos deben mostrar una señal visible');
 assert.match(code, /Ver solución/, 'debe existir el botón de consulta');
 
