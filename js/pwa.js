@@ -1,4 +1,5 @@
 import { APP_VERSION } from './brand.js';
+import './perfect-solution.js';
 
 const $ = (selector) => document.querySelector(selector);
 
@@ -275,8 +276,6 @@ function applyWaitingUpdate() {
     return;
   }
 
-  // Si el navegador ya activó el nuevo worker entre la detección y el toque,
-  // una recarga basta para entrar a la nueva versión.
   window.location.reload();
 }
 
