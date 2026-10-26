@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sudoproyectivo-1.1.5';
+const CACHE_NAME = 'sudoproyectivo-1.1.6';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -14,6 +14,7 @@ const CORE_ASSETS = [
   './js/puzzles.js',
   './js/campaign-migration.js',
   './js/brand.js',
+  './js/reset-controls.js',
   './js/pwa.js',
   './js/profile.js',
   './js/perfect-solution.js',
