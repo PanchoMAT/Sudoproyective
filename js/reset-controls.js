@@ -5,8 +5,9 @@ import route4 from './data/route4.js';
 import route5 from './data/route5.js';
 import route6 from './data/route6.js';
 
-const STORAGE_KEY = 'sudoproyective-v02';
-const RESUME_KEY = 'sudoproyective-reset-level-resume';
+const STORAGE_KEY = 'sudoproyectivo-v02';
+const RESUME_KEY = 'sudoproyectivo-reset-level-resume';
+const TOTAL_RESET_KEY = 'sudoproyectivo-total-reset-pending';
 const routeData = [route1, route2, route3, route4, route5, route6];
 
 function levelIdFor(world, localNumber) {
@@ -40,6 +41,35 @@ function readSave() {
 
 function writeSave(save) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(save));
+}
+
+function readResumeTarget() {
+  try {
+    return JSON.parse(sessionStorage.getItem(RESUME_KEY));
+  } catch {
+    return null;
+  }
+}
+
+function applyPendingResetsBeforeGameLoads() {
+  // app.js guarda automáticamente al salir. Estas marcas hacen que, al volver a
+  // cargar, el borrado se aplique otra vez antes de que app.js lea el progreso.
+  if (sessionStorage.getItem(TOTAL_RESET_KEY) === '1') {
+    localStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem(TOTAL_RESET_KEY);
+    sessionStorage.removeItem(RESUME_KEY);
+    return;
+  }
+
+  const target = readResumeTarget();
+  if (!target?.world || !target?.localNumber) return;
+  const id = levelIdFor(target.world, target.localNumber);
+  if (!id) return;
+
+  const save = readSave();
+  save.levels = { ...(save.levels || {}) };
+  delete save.levels[id];
+  writeSave(save);
 }
 
 function ensureStyles() {
@@ -133,12 +163,7 @@ function findLevelRow(localNumber) {
 }
 
 function resumeResetLevel() {
-  let target;
-  try {
-    target = JSON.parse(sessionStorage.getItem(RESUME_KEY));
-  } catch {
-    target = null;
-  }
+  const target = readResumeTarget();
   if (!target?.world || !target?.localNumber) return false;
 
   const routeButton = findRouteButton(target.world);
@@ -181,6 +206,7 @@ function protectTotalReset() {
     );
     if (!second) return;
 
+    sessionStorage.setItem(TOTAL_RESET_KEY, '1');
     localStorage.removeItem(STORAGE_KEY);
     sessionStorage.removeItem(RESUME_KEY);
     window.location.reload();
@@ -209,6 +235,7 @@ function observeGameState() {
 }
 
 function init() {
+  applyPendingResetsBeforeGameLoads();
   ensureStyles();
   ensureLevelResetButton();
   protectTotalReset();
