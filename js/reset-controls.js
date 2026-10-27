@@ -45,19 +45,20 @@ function writeSave(save) {
 
 function readResumeTarget() {
   try {
-    return JSON.parse(sessionStorage.getItem(RESUME_KEY));
+    return JSON.parse(localStorage.getItem(RESUME_KEY));
   } catch {
     return null;
   }
 }
 
 function applyPendingResetsBeforeGameLoads() {
-  // app.js guarda automáticamente al salir. Estas marcas hacen que, al volver a
-  // cargar, el borrado se aplique otra vez antes de que app.js lea el progreso.
-  if (sessionStorage.getItem(TOTAL_RESET_KEY) === '1') {
+  // app.js guarda automáticamente al salir. Las marcas de reinicio viven en
+  // localStorage (fuera del progreso) para sobrevivir de forma fiable a la
+  // recarga de una PWA móvil. Se aplican antes de que app.js lea el progreso.
+  if (localStorage.getItem(TOTAL_RESET_KEY) === '1') {
     localStorage.removeItem(STORAGE_KEY);
-    sessionStorage.removeItem(TOTAL_RESET_KEY);
-    sessionStorage.removeItem(RESUME_KEY);
+    localStorage.removeItem(TOTAL_RESET_KEY);
+    localStorage.removeItem(RESUME_KEY);
     return;
   }
 
@@ -133,15 +134,17 @@ function resetCurrentLevel() {
   );
   if (!accepted) return;
 
+  // Marcamos primero el reinicio. Aunque beforeunload vuelva a guardar el tablero
+  // antiguo, la siguiente carga borrará de nuevo esta partida antes de iniciar app.js.
+  localStorage.setItem(RESUME_KEY, JSON.stringify({
+    world: target.world,
+    localNumber: target.localNumber,
+  }));
+
   const save = readSave();
   save.levels = { ...(save.levels || {}) };
   delete save.levels[target.id];
   writeSave(save);
-
-  sessionStorage.setItem(RESUME_KEY, JSON.stringify({
-    world: target.world,
-    localNumber: target.localNumber,
-  }));
   window.location.reload();
 }
 
@@ -173,7 +176,8 @@ function resumeResetLevel() {
   const levelRow = findLevelRow(target.localNumber);
   if (!levelRow) return false;
 
-  sessionStorage.removeItem(RESUME_KEY);
+  // Se elimina sólo cuando ya encontramos el nivel y estamos a punto de abrirlo.
+  localStorage.removeItem(RESUME_KEY);
   levelRow.click();
   return true;
 }
@@ -181,7 +185,7 @@ function resumeResetLevel() {
 function scheduleResume() {
   [0, 80, 250, 700].forEach((delay) => {
     window.setTimeout(() => {
-      if (!sessionStorage.getItem(RESUME_KEY)) return;
+      if (!localStorage.getItem(RESUME_KEY)) return;
       resumeResetLevel();
     }, delay);
   });
@@ -206,9 +210,9 @@ function protectTotalReset() {
     );
     if (!second) return;
 
-    sessionStorage.setItem(TOTAL_RESET_KEY, '1');
+    localStorage.setItem(TOTAL_RESET_KEY, '1');
     localStorage.removeItem(STORAGE_KEY);
-    sessionStorage.removeItem(RESUME_KEY);
+    localStorage.removeItem(RESUME_KEY);
     window.location.reload();
   }, true);
 }
