@@ -5,7 +5,7 @@ import route4 from './data/route4.js';
 import route5 from './data/route5.js';
 import route6 from './data/route6.js';
 
-const STORAGE_KEY = 'sudoproyectivo-v02';
+const STORAGE_KEY = 'sudoproyective-v02';
 const RESUME_KEY = 'sudoproyectivo-reset-level-resume';
 const TOTAL_RESET_KEY = 'sudoproyectivo-total-reset-pending';
 const routeData = [route1, route2, route3, route4, route5, route6];
@@ -69,7 +69,20 @@ function applyPendingResetsBeforeGameLoads() {
 
   const save = readSave();
   save.levels = { ...(save.levels || {}) };
-  delete save.levels[id];
+
+  // La copia limpia se construyó desde el propio tablero después de borrar cada
+  // casilla editable mediante los controles reales del juego. Se reescribe aquí
+  // después del beforeunload para que ningún autosave antiguo pueda recuperarse.
+  if (Array.isArray(target.values) && target.values.length === 7) {
+    save.levels[id] = {
+      values: target.values.map((row) => [...row]),
+      notes: {},
+      hints: Number(target.hints || 0),
+      elapsed: 0,
+    };
+  } else {
+    delete save.levels[id];
+  }
   writeSave(save);
 }
 
@@ -125,6 +138,38 @@ function syncLevelResetButton() {
   button.classList.toggle('hidden', !currentLevelTarget());
 }
 
+function clearEditableCellsThroughGame() {
+  const board = document.querySelector('#board');
+  const erase = document.querySelector('#eraseBtn');
+  if (!board || !erase) return false;
+
+  const editableCells = [...board.querySelectorAll('.cell:not(.given)')];
+  for (const cell of editableCells) {
+    // Hacemos el borrado a través de los listeners de app.js. Así se limpian
+    // state.values y state.notes, no sólo el HTML visible.
+    cell.click();
+    erase.click();
+  }
+  return true;
+}
+
+function readBoardValues() {
+  const cells = [...document.querySelectorAll('#board .cell')];
+  if (cells.length !== 49) return null;
+  return Array.from({ length: 7 }, (_, row) =>
+    Array.from({ length: 7 }, (_, col) => {
+      const cell = cells[row * 7 + col];
+      const directText = [...cell.childNodes]
+        .filter((node) => node.nodeType === Node.TEXT_NODE)
+        .map((node) => node.nodeValue || '')
+        .join('')
+        .trim();
+      const value = Number(directText);
+      return Number.isInteger(value) && value >= 1 && value <= 7 ? value : 0;
+    })
+  );
+}
+
 function resetCurrentLevel() {
   const target = currentLevelTarget();
   if (!target) return;
@@ -134,16 +179,35 @@ function resetCurrentLevel() {
   );
   if (!accepted) return;
 
-  // Marcamos primero el reinicio. Aunque beforeunload vuelva a guardar el tablero
-  // antiguo, la siguiente carga borrará de nuevo esta partida antes de iniciar app.js.
+  const saveBefore = readSave();
+  const hintsUsed = Number(saveBefore.levels?.[target.id]?.hints || 0);
+
+  // Primero limpiamos el estado vivo del motor. Ésta es la parte esencial: evita
+  // que app.js conserve en memoria los números del jugador y los vuelva a guardar.
+  clearEditableCellsThroughGame();
+  const cleanValues = readBoardValues();
+
   localStorage.setItem(RESUME_KEY, JSON.stringify({
     world: target.world,
     localNumber: target.localNumber,
+    values: cleanValues,
+    hints: hintsUsed,
   }));
 
+  // Dejamos también el guardado actual limpio antes de recargar. La marca anterior
+  // hará una segunda aplicación al arrancar, después de cualquier beforeunload.
   const save = readSave();
   save.levels = { ...(save.levels || {}) };
-  delete save.levels[target.id];
+  if (cleanValues) {
+    save.levels[target.id] = {
+      values: cleanValues.map((row) => [...row]),
+      notes: {},
+      hints: hintsUsed,
+      elapsed: 0,
+    };
+  } else {
+    delete save.levels[target.id];
+  }
   writeSave(save);
   window.location.reload();
 }
