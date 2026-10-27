@@ -4,9 +4,15 @@ import fs from 'node:fs';
 const code = fs.readFileSync(new URL('../js/reset-controls.js', import.meta.url), 'utf8');
 
 assert.match(code, /Reiniciar nivel/, 'Debe existir el botón de reinicio del nivel');
-assert.match(code, /delete save\.levels\[target\.id\]/, 'El reinicio del nivel debe borrar sólo la partida parcial actual');
+assert.match(code, /clearEditableCellsThroughGame/, 'El reinicio debe limpiar el estado vivo del motor');
+assert.match(code, /\.cell:not\(\.given\)/, 'Debe recorrer sólo las casillas editables');
+assert.match(code, /cell\.click\(\)/, 'Debe seleccionar cada casilla mediante el listener real de app.js');
+assert.match(code, /erase\.click\(\)/, 'Debe borrar mediante el control real del juego');
+assert.match(code, /readBoardValues/, 'Debe capturar el tablero limpio antes de recargar');
+assert.match(code, /notes:\s*\{\}/, 'El reinicio debe restaurar las notas vacías');
+assert.match(code, /elapsed:\s*0/, 'El reinicio debe volver el cronómetro a cero');
 assert.match(code, /localStorage\.setItem\(RESUME_KEY/, 'El reinicio pendiente debe sobrevivir a la recarga de la PWA');
-assert.match(code, /applyPendingResetsBeforeGameLoads/, 'Debe reaplicar el borrado antes de que app.js lea el progreso');
+assert.match(code, /applyPendingResetsBeforeGameLoads/, 'Debe reaplicar el tablero limpio antes de que app.js lea el progreso');
 assert.match(code, /localStorage\.getItem\(RESUME_KEY\)/, 'La reanudación debe leer la marca persistente');
 assert.doesNotMatch(code, /sessionStorage\.setItem\(RESUME_KEY/, 'El reinicio de nivel no debe depender de sessionStorage');
 assert.match(code, /TOTAL_RESET_KEY/, 'El reinicio total debe sobrevivir al autosave de beforeunload');
