@@ -99,7 +99,7 @@ export function ensureProjectiveUI() {
       <div class="game-head"><button id="ultraBackBtn" class="icon-btn" aria-label="Volver">←</button><div><p id="ultraMeta" class="eyebrow">Proyectivo</p><h2 id="ultraTitle">Desafío Ultraexperto</h2></div><div id="ultraTimer" class="timer">00:00</div></div>
       <div class="tutorial-callout"><div><strong>Ultraexperto</strong><p>Sin pistas · la prueba final</p></div><span class="ultra-tag">12 pistas iniciales</span></div>
       <div class="board-wrap"><div id="ultraBoard" class="board" role="grid" aria-label="Tablero Ultraexperto 7 por 7"></div></div>
-      <div class="status-row game-tools ultra-tools"><button id="ultraNotesBtn" class="mode-btn">Notas <span>○</span></button><button id="ultraRoutesBtn" class="mode-btn active">Rutas <span>●</span></button></div>
+      <div class="status-row game-tools ultra-tools"><button id="ultraNotesBtn" class="mode-btn">Notas <span>○</span></button><button id="ultraRoutesBtn" class="mode-btn active">Rutas <span>●</span></button><button id="ultraResetBtn" class="mode-btn" type="button" aria-label="Reiniciar nivel Proyectivo">↺ Reiniciar nivel</button></div>
       <div class="status-row secondary-tools"><div class="history-tools"><button id="ultraUndoBtn" class="mode-btn history-btn" disabled>↶ <span>Deshacer</span></button><button id="ultraRedoBtn" class="mode-btn history-btn" disabled>↷ <span>Rehacer</span></button></div><span class="mini-balance">No modifica estrellas</span></div>
       <div class="number-pad ultra-number-pad" aria-label="Selector de números Ultraexperto"><div id="ultraNumbers" class="numbers"></div><button id="ultraEraseBtn" class="erase-btn" aria-label="Borrar">⌫</button></div>`;
     main.insertBefore(section, mainNav);
