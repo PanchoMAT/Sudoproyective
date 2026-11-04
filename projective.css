@@ -100,7 +100,8 @@
 /* Ultraexperto */
 #ultraGameScreen { padding-bottom: 82px; }
 .ultra-tag { color: var(--route); font-size: .78rem; font-weight: 850; }
-.ultra-tools { grid-template-columns: repeat(2,1fr); }
+.ultra-tools { grid-template-columns: repeat(3,minmax(0,1fr)); gap:8px; }
+#ultraResetBtn { min-width:0; padding:10px 5px; font-size:clamp(.72rem,2.5vw,.86rem); color:#ffe4bb; border-color:rgba(255,190,105,.34); }
 .ultra-number-pad { z-index: 35; }
 .ultra-family-graphic { width: min(100%, 390px); margin: 8px auto; }
 .ultra-family-graphic .family-route { stroke-width:2.7; }
