@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { resetUltraAttempt } from '../js/projective/ultra-reset.js';
 import { ULTRA_LEVELS } from '../js/ultra.js';
 import { makeConstraintSystem, SIZE } from '../js/geometry.js';
 
@@ -66,5 +68,40 @@ for (const item of ULTRA_LEVELS) {
   }
   assert.equal(countSolutions(item.puzzle, item.slopes), 1, `${item.id}: solución única`);
 }
+
+// Verifica el reinicio real de cada uno de los seis desafíos sin alterar sus pistas.
+for (const level of ULTRA_LEVELS) {
+  const state = {
+    values: level.solution.map((row) => [...row]),
+    notes: new Map([['0,0', new Set([2,3])]]),
+    selected: { row: 3, col: 4 },
+    notesMode: true,
+    routesVisible: false,
+    elapsed: 318,
+    startedAt: 12345678,
+    undoStack: [{ values: [] }],
+    redoStack: [{ values: [] }],
+  };
+  resetUltraAttempt(state, level.puzzle);
+  assert.deepEqual(state.values, level.puzzle, level.id + ': debe volver al tablero original');
+  assert.notStrictEqual(state.values, level.puzzle, level.id + ': no debe mutar el puzzle fuente');
+  assert.notStrictEqual(state.values[0], level.puzzle[0], level.id + ': debe copiar cada fila');
+  assert.equal(state.notes.size, 0, level.id + ': debe borrar las notas');
+  assert.equal(state.selected, null);
+  assert.equal(state.notesMode, false);
+  assert.equal(state.routesVisible, true);
+  assert.equal(state.elapsed, 0);
+  assert.equal(state.startedAt, null);
+  assert.deepEqual(state.undoStack, []);
+  assert.deepEqual(state.redoStack, []);
+  state.values[0][0] = 99;
+  assert.notEqual(level.puzzle[0][0], 99, level.id + ': debe preservar las pistas originales');
+}
+const ultraGameCode = fs.readFileSync(new URL('../js/projective/ultra-game.js', import.meta.url), 'utf8');
+const ultraUiCode = fs.readFileSync(new URL('../js/projective/ui.js', import.meta.url), 'utf8');
+assert.match(ultraUiCode, /id="ultraResetBtn"/, 'Falta el botón de reinicio Proyectivo');
+assert.match(ultraGameCode, /ultraResetBtn'\)\?\.addEventListener\('click',resetUltraLevel\)/, 'El botón debe conectarse al motor Ultraexperto');
+assert.match(ultraGameCode, /resetUltraAttempt\(state, item\(\)\.puzzle\)/, 'Debe restaurar las pistas originales');
+assert.match(ultraGameCode, /saveProgress\(\);\s*startTimer\(\);/, 'Debe guardar la partida limpia antes de reanudar el cronómetro');
 
 console.log('ultra.test.mjs: OK');
