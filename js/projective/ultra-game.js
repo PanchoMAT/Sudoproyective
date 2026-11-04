@@ -2,6 +2,7 @@ import { ULTRA_LEVELS } from '../ultra.js';
 import { SIZE, SYMBOLS, cellKey, makeConstraintSystem, routeCellsFor } from '../geometry.js';
 import { projectUnlocked, ultraComplete, loadUltraState, saveUltraState, markUltraComplete, allUltraComplete } from './storage.js';
 import { ultraRevealSvg } from './visuals.js';
+import { resetUltraAttempt } from './ultra-reset.js';
 
 const $ = (selector) => document.querySelector(selector);
 const ultraScreen = $('#ultraGameScreen');
@@ -74,6 +75,28 @@ export function startUltra(index) {
   renderBoard();
   renderNumbers();
   updateHistory();
+  startTimer();
+}
+
+function resetUltraLevel() {
+  if (!ultraScreen?.classList.contains('active') || ultraVictoryDialog?.open) return;
+  if (!window.confirm(
+    '¿Reiniciar este nivel Proyectivo?\n\nSe borrarán todos los números y notas que agregaste y el tiempo volverá a cero. Tus desafíos completados y logros se conservarán.'
+  )) return;
+
+  stopTimer();
+  resetUltraAttempt(state, item().puzzle);
+  if (invalidDialog?.open) invalidDialog.close();
+
+  $('#ultraNotesBtn').classList.remove('active');
+  $('#ultraRoutesBtn').classList.add('active');
+  $('#ultraRoutesBtn').innerHTML = 'Rutas <span>●</span>';
+
+  renderBoard();
+  renderNumbers();
+  updateHistory();
+  updateTimer();
+  saveProgress();
   startTimer();
 }
 
@@ -368,6 +391,7 @@ function updateTimer() {
 }
 
 $('#ultraBackBtn')?.addEventListener('click',leaveUltra);
+$('#ultraResetBtn')?.addEventListener('click',resetUltraLevel);
 $('#ultraNotesBtn')?.addEventListener('click',()=>{state.notesMode=!state.notesMode;$('#ultraNotesBtn').classList.toggle('active',state.notesMode);});
 $('#ultraRoutesBtn')?.addEventListener('click',()=>{state.routesVisible=!state.routesVisible;$('#ultraRoutesBtn').classList.toggle('active',state.routesVisible);$('#ultraRoutesBtn').innerHTML=state.routesVisible?'Rutas <span>●</span>':'Rutas <span>○</span>';paintSelection();});
 $('#ultraEraseBtn')?.addEventListener('click',erase);
