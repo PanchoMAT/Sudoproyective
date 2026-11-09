@@ -1,5 +1,21 @@
 # SudoProyectivo
 
+**Versión actual: 1.2.0 · mundos F3, F5 y F7.** La primera versión estable 1.0 se conserva como hito histórico.
+
+## Selección de mundos (desde 1.2.0)
+
+Al iniciar puedes escoger el cuerpo basal:
+
+- **F3:** tablero 3×3, dos rutas y cinco puzzles por dificultad en cada ruta (30 en total).
+- **F5:** tablero 5×5, cuatro rutas y siete puzzles por dificultad en cada ruta (84 en total).
+- **F7:** tablero 7×7 y sus 180 puzzles históricos, sin cambios.
+
+F3 y F5 tienen progreso, estrellas, premios de ruta, Platino y desafíos Proyectivo propios. La **Superplatino** requiere tener Platino en F3, F5 y F7. Las dos nuevas construcciones finales muestran PG(2,3) y PG(2,5).
+
+Las 114 nuevas instancias ordinarias y los seis nuevos Ultraexpertos tienen solución única comprobada. El progreso de F7 se sigue leyendo de `sudoproyective-v02`; F3 y F5 se guardan por separado en `sudoproyectivo-fields-v1`, sin migrar ni reescribir la partida original. El modo de revisión permite inspeccionar los tres mundos sin alterar el guardado real.
+
+Consulta [VERSION_1.2.0.md](VERSION_1.2.0.md) para el alcance detallado.
+
 **Versión estable 1.0 · 21 de octubre de 2026**
 
 Puzzle matemático independiente inspirado en geometría afín y proyectiva finita.
