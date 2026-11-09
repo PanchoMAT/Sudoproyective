@@ -38,7 +38,7 @@ assert.match(perfectSolution, /__SUDOP_SOLUTION_VIEWER_READY__/, 'El visor debe 
 assert.match(brand, /import '\.\/reset-controls\.js';/, 'Los controles seguros de reinicio deben cargarse con el núcleo');
 assert.match(puzzles, /import '\.\/pwa\.js';/);
 assert.match(serviceWorker, /CACHE_NAME/);
-assert.match(serviceWorker, /sudoproyectivo-1\.1\.9/);
+assert.match(serviceWorker, /sudoproyectivo-1\.1\.10/);
 assert.match(serviceWorker, /SKIP_WAITING/);
 assert.match(serviceWorker, /clients\.claim/);
 assert.match(serviceWorker, /manifest\.webmanifest/);
@@ -46,5 +46,7 @@ assert.match(serviceWorker, /js\/app\.js/);
 assert.match(serviceWorker, /js\/perfect-solution\.js/);
 assert.match(serviceWorker, /js\/reset-controls\.js/);
 assert.match(serviceWorker, /js\/projective\/ultra-reset\.js/);
+assert.match(serviceWorker, /js\/review-unlocked\.js/);
+assert.match(serviceWorker, /js\/review-bootstrap\.js/);
 
 console.log('pwa.test.mjs: OK');
