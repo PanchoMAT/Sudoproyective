@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><title>Prueba de navegador SudoProyectivo</title></head>
+<body>
+  <div id="result" data-result="running">Ejecutando prueba de navegador…</div>
+  <iframe id="app" src="../?field=3" style="width:800px;height:900px"></iframe>
+  <script type="module">
+    const result = document.getElementById('result');
+    const frame = document.getElementById('app');
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    function check(condition, message) {
+      if (!condition) throw new Error(message);
+    }
+    async function waitFor(fn, message, limit = 8000) {
+      const start = Date.now();
+      while (!fn()) {
+        if (Date.now() - start > limit) throw new Error('Timeout: ' + message);
+        await sleep(80);
+      }
+    }
+    async function execute() {
+      await waitFor(() => Boolean(frame.contentWindow.__SUDOP_FIELDS__) &&
+        frame.contentDocument.querySelector('#fieldHubScreen.active'), 'F3 inicial');
+      const w = frame.contentWindow;
+      const d = frame.contentDocument;
+      check(d.querySelectorAll('.field-route-tabs button').length === 2,
+        'F3 debe tener dos rutas');
+      check(d.querySelectorAll('.field-level-row').length === 15,
+        'F3 debe mostrar quince puzzles por ruta');
+      d.querySelector('.field-level-row').click();
+      check(d.querySelector('#fieldGameScreen.active'), 'Debe abrir F3');
+      check(d.querySelectorAll('#fieldBoard .field-cell').length === 9,
+        'F3 debe tener nueve casillas');
+      const editable = [...d.querySelectorAll('#fieldBoard .field-cell:not(.given)')];
+      check(editable.length === 3, 'F3 Fácil comienza con seis pistas');
+      editable[0].click();
+      d.querySelector('#fieldNumbers .field-digit').click();
+      check(d.querySelectorAll('#fieldBoard .field-cell.filled').length === 1,
+        'Debe poder colocar un número en F3');
+      d.querySelector('#fieldNotes').click();
+      editable[1].dataset.row; // El tablero se redibuja después de cada jugada.
+      const noteCell = [...d.querySelectorAll('#fieldBoard .field-cell:not(.given)')][1];
+      noteCell.click();
+      d.querySelector('#fieldNumbers .field-digit').click();
+      check(d.querySelectorAll('#fieldBoard .field-notes').length > 0,
+        'Deben poder registrarse notas en F3');
+      w.confirm = () => true;
+      d.querySelector('#fieldReset').click();
+      check(d.querySelectorAll('#fieldBoard .field-cell.filled').length === 0,
+        'Reiniciar F3 debe borrar los números colocados');
+      check(d.querySelectorAll('#fieldBoard .field-notes').length === 0,
+        'Reiniciar F3 debe borrar las notas');
+      check(d.querySelector('#fieldTimer').textContent === '00:00',
+        'Reiniciar F3 debe reiniciar el reloj');
+      d.querySelector('#fieldBack').click();
+      d.querySelector('#fieldChooseWorldBtn').click();
+      check(d.querySelector('#fieldWorldHome.active'), 'Debe volver a la selección');
+      check(d.querySelectorAll('#fieldWorldCards .field-world-card').length === 3,
+        'El inicio debe incluir F3, F5 y F7');
+      d.querySelector('[data-field-action="enter"][data-p="5"]').click();
+      check(d.querySelector('#fieldHubScreen.active'), 'Debe abrir F5');
+      check(d.querySelectorAll('.field-route-tabs button').length === 4,
+        'F5 debe tener cuatro rutas');
+      check(d.querySelectorAll('.field-level-row').length === 21,
+        'F5 debe mostrar veintiún puzzles por ruta');
+      d.querySelector('.field-level-row').click();
+      check(d.querySelectorAll('#fieldBoard .field-cell').length === 25,
+        'F5 debe tener veinticinco casillas');
+      const f5cell = d.querySelector('#fieldBoard .field-cell:not(.given)');
+      f5cell.click();
+      d.querySelector('#fieldNumbers .field-digit').click();
+      check(d.querySelectorAll('#fieldBoard .field-cell.filled').length === 1,
+        'Debe poder colocar números en F5');
+      d.querySelector('#fieldReset').click();
+      check(d.querySelectorAll('#fieldBoard .field-cell.filled').length === 0,
+        'Reiniciar F5 debe devolver las pistas originales');
+      d.querySelector('#fieldChooseWorldBtn').click();
+      d.querySelector('[data-field-action="enter"][data-p="7"]').click();
+      check(d.querySelector('#hubScreen.active'), 'F7 debe reabrir el motor original');
+      check(d.querySelectorAll('#difficultySections .level-row').length === 30,
+        'F7 debe conservar sus treinta niveles por ruta');
+      result.dataset.result = 'ok';
+      result.textContent = 'OK: F3, F5, reinicios, navegación y F7 clásico';
+    }
+    execute().catch((error) => {
+      result.dataset.result = 'failed';
+      result.textContent = 'ERROR: ' + error.stack;
+    });
+  </script>
+</body>
+</html>
