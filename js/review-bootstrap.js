@@ -27,14 +27,56 @@
     native.setItem.call(sessionStorage, SHADOW_KEY, value == null ? '' : String(value));
   }
 
+  // Otros datos de la app (perfil y marcas de reinicio) también se aíslan:
+  // ninguno de los controles de prueba puede escribir sobre el almacenamiento real.
+  const EXTRA_PREFIX = 'sudoproyective-review-extra:';
+  const EXTRA_INDEX_KEY = 'sudoproyective-review-extra-index';
+  const EXTRA_CLEAR_KEY = 'sudoproyective-review-extra-cleared';
+  const RESET_KEYS = new Set([
+    'sudoproyectivo-reset-level-resume',
+    'sudoproyectivo-total-reset-pending',
+  ]);
+  function isAppKey(key) {
+    return typeof key === 'string' &&
+      (key.startsWith('sudoproyective-') || key.startsWith('sudoproyectivo-'));
+  }
+  function extraIndex() {
+    try { return JSON.parse(native.getItem.call(sessionStorage, EXTRA_INDEX_KEY) || '[]'); }
+    catch { return []; }
+  }
+  function setExtraShadow(key, value) {
+    native.setItem.call(sessionStorage, EXTRA_PREFIX + key, JSON.stringify(value == null ? null : String(value)));
+    const keys = extraIndex();
+    if (!keys.includes(key)) {
+      keys.push(key);
+      native.setItem.call(sessionStorage, EXTRA_INDEX_KEY, JSON.stringify(keys));
+    }
+  }
+  function getExtraShadow(key) {
+    const stored = native.getItem.call(sessionStorage, EXTRA_PREFIX + key);
+    if (stored !== null) {
+      try { return JSON.parse(stored); }
+      catch { return null; }
+    }
+    const cleared = native.getItem.call(sessionStorage, EXTRA_CLEAR_KEY) === '1';
+    const initial = cleared || RESET_KEYS.has(key) ? null : native.getItem.call(localStorage, key);
+    setExtraShadow(key, initial);
+    return initial;
+  }
+
   Storage.prototype.getItem = function(key) {
     if (this === localStorage && key === STORAGE_KEY) return getShadow();
+    if (this === localStorage && isAppKey(key)) return getExtraShadow(key);
     return native.getItem.call(this, key);
   };
 
   Storage.prototype.setItem = function(key, value) {
     if (this === localStorage && key === STORAGE_KEY) {
       setShadow(value);
+      return;
+    }
+    if (this === localStorage && isAppKey(key)) {
+      setExtraShadow(key, value);
       return;
     }
     return native.setItem.call(this, key, value);
@@ -45,12 +87,18 @@
       setShadow(null);
       return;
     }
+    if (this === localStorage && isAppKey(key)) {
+      setExtraShadow(key, null);
+      return;
+    }
     return native.removeItem.call(this, key);
   };
 
   Storage.prototype.clear = function() {
     if (this === localStorage) {
       setShadow(null);
+      native.setItem.call(sessionStorage, EXTRA_CLEAR_KEY, '1');
+      for (const key of extraIndex()) setExtraShadow(key, null);
       return;
     }
     return native.clear.call(this);
