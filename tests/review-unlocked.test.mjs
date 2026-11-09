@@ -49,6 +49,7 @@ local.setItem('sudoproyective-v02', original);
 local.setItem('sudoproyectivo-profile-v1', '{"name":"Perfil real"}');
 const sandbox = {
   window: {},
+  URLSearchParams,
   location: { search: '?review=1&all=1' },
   Storage: FakeStorage,
   localStorage: local,
