@@ -1,5 +1,6 @@
 import { LEVELS } from './puzzles.js';
 import { ULTRA_LEVELS } from './ultra.js';
+import { buildFullyUnlockedReviewSave } from './review-unlocked.js';
 import { DIRECTIONS, familySvg, circularProjectiveSvg } from './projective/visuals.js';
 
 if (!window.__SUDOP_REVIEW__) throw new Error('review.js sólo debe cargarse con ?review=1');
@@ -36,7 +37,18 @@ function injectUI() {
     const banner = document.createElement('div');
     banner.id = 'reviewBanner';
     banner.className = 'review-banner';
-    banner.textContent = '🛠 MODO REVISIÓN · el progreso real está protegido';
+    const full = Boolean(window.__SUDOP_REVIEW_FULL__);
+    const label = document.createElement('span');
+    label.textContent = full
+      ? '🛠 REVISIÓN · TODO DESBLOQUEADO · TU PROGRESO ESTÁ PROTEGIDO'
+      : '🛠 MODO REVISIÓN · el progreso real está protegido';
+    const exit = document.createElement('a');
+    const normalUrl = new URL(window.location.href);
+    normalUrl.searchParams.delete('review');
+    normalUrl.searchParams.delete('all');
+    exit.href = normalUrl.toString();
+    exit.textContent = 'Volver a mi partida';
+    banner.append(label, exit);
     topbar.insertAdjacentElement('afterend', banner);
   }
 
@@ -60,7 +72,7 @@ function injectUI() {
 
         <section class="review-section"><h3>6 · Recompensa oculta</h3><p>Comprueba la versión ??? y la credencial final.</p><div class="review-grid"><button id="reviewCredentialLocked" class="review-btn">Ver como ???</button><button id="reviewCredentialEarned" class="review-btn primary">Mostrar credencial</button></div></section>
 
-        <section class="review-section"><h3>Sesión de revisión</h3><p>Todo vive en una copia temporal del progreso.</p><div class="review-grid"><button id="reviewClean" class="review-btn">Estado limpio</button><button id="reviewResetReal" class="review-btn warn">Volver a copiar mi progreso real</button></div><p class="review-note">Salir de <code>?review=1</code> devuelve automáticamente el juego a tu progreso real.</p></section>
+        <section class="review-section"><h3>Sesión de revisión</h3><p>Todo vive en una copia temporal del progreso.</p><div class="review-grid"><button id="reviewClean" class="review-btn">Estado limpio</button><button id="reviewResetReal" class="review-btn warn">Volver a copiar mi progreso real</button>${window.__SUDOP_REVIEW_FULL__ ? '<button id="reviewRestoreFull" class="review-btn primary">Restaurar todo desbloqueado</button>' : ''}</div><p class="review-note">Salir de <code>?review=1</code> devuelve automáticamente el juego a tu progreso real.</p></section>
       </dialog>`);
   }
 
@@ -241,6 +253,10 @@ function bind() {
   $('#reviewCredentialEarned').addEventListener('click', () => setCredential(true, true));
   $('#reviewClean').addEventListener('click', cleanState);
   $('#reviewResetReal').addEventListener('click', () => { reviewStore.resetFromReal(); window.dispatchEvent(new CustomEvent('sudoproyective:projective-change')); refreshStatus(); toast('Se volvió a copiar el progreso real.'); });
+  $('#reviewRestoreFull')?.addEventListener('click', () => {
+    reviewStore.write(buildFullyUnlockedReviewSave(readSave()));
+    window.location.reload();
+  });
   $('#reviewSolveVisible').addEventListener('click', () => solveVisible(false));
   $('#reviewAlmostVisible').addEventListener('click', () => solveVisible(true));
 }
