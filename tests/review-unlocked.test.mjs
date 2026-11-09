@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { buildFullyUnlockedReviewSave } from '../js/review-unlocked.js';
+import { buildFullyUnlockedReviewSave, buildFullyUnlockedSmallFieldReviewSave } from '../js/review-unlocked.js';
+import { FIELD_CAMPAIGNS } from '../js/fields/core.js';
 import { LEVELS } from '../js/puzzles.js';
 import { ULTRA_LEVELS } from '../js/ultra.js';
 
@@ -12,6 +13,17 @@ const real = {
   ultraCompleted: {},
   projectiveCredential: false,
 };
+const smallOriginal = { 3: { bestStars: { any: 1 } }, 5: { availableStars: 4 } };
+const smallBefore = JSON.stringify(smallOriginal);
+const smallUnlocked = buildFullyUnlockedSmallFieldReviewSave(smallOriginal);
+assert.equal(JSON.stringify(smallOriginal), smallBefore);
+for (const p of [3,5]) {
+  const campaign = FIELD_CAMPAIGNS[p];
+  assert.equal(Object.keys(smallUnlocked[p].bestStars).length, campaign.levels.length);
+  assert.equal(Object.keys(smallUnlocked[p].ultraCompleted).length, p-1);
+  assert.equal(smallUnlocked[p].availableStars, campaign.levels.length*3);
+  assert.equal(smallUnlocked[p].finalSeen, true);
+}
 const original = JSON.stringify(real);
 const unlocked = buildFullyUnlockedReviewSave(real);
 assert.equal(JSON.stringify(real), original, 'La copia de revisión no debe mutar el progreso original');
@@ -47,6 +59,7 @@ const local = new FakeStorage();
 const session = new FakeStorage();
 local.setItem('sudoproyective-v02', original);
 local.setItem('sudoproyectivo-profile-v1', '{"name":"Perfil real"}');
+local.setItem('sudoproyectivo-fields-v1', JSON.stringify(smallOriginal));
 const sandbox = {
   window: {},
   URLSearchParams,
@@ -67,6 +80,9 @@ assert.equal(local.data.get('sudoproyective-v02'), original,
   'El progreso real no puede cambiar al abrir todo en modo revisión');
 assert.equal(JSON.parse(sandbox.localStorage.getItem('sudoproyective-v02')).availableStars, 540);
 
+sandbox.localStorage.setItem('sudoproyectivo-fields-v1', JSON.stringify(smallUnlocked));
+assert.equal(local.data.get('sudoproyectivo-fields-v1'), smallBefore,
+  'El progreso real de F3 y F5 no puede cambiar en revisión');
 sandbox.localStorage.setItem('sudoproyectivo-profile-v1', '{"name":"Prueba"}');
 assert.equal(local.data.get('sudoproyectivo-profile-v1'), '{"name":"Perfil real"}',
   'El perfil real también debe quedar protegido');
@@ -78,5 +94,6 @@ assert.equal(local.data.get('sudoproyective-v02'), original);
 sandbox.localStorage.clear();
 assert.equal(local.data.get('sudoproyective-v02'), original);
 assert.equal(local.data.get('sudoproyectivo-profile-v1'), '{"name":"Perfil real"}');
+assert.equal(local.data.get('sudoproyectivo-fields-v1'), smallBefore);
 
 console.log('review-unlocked.test.mjs: OK');
