@@ -93,6 +93,7 @@ if (typeof document !== 'undefined') {
         await import('./review.js');
         await import('./review-polish.js');
       }
+      await import('./fields/app.js');
     } catch (error) {
       console.error('No se pudo cargar una capa complementaria de SudoProyectivo', error);
     }
