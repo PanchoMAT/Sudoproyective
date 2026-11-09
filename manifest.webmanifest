@@ -1,7 +1,7 @@
 {
   "name": "SudoProyectivo",
   "short_name": "SudoProyectivo",
-  "description": "Puzzle matemático 7×7 inspirado en geometría afín y proyectiva finita.",
+  "description": "Puzzle matemático sobre cuerpos finitos F3, F5 y F7, inspirado en geometría afín y proyectiva.",
   "lang": "es-CL",
   "id": "./",
   "start_url": "./",
