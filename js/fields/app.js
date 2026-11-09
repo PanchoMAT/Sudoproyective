@@ -64,15 +64,15 @@ function section(id, content) {
 }
 function createUI() {
   addStyle();
-  const headerActions = $('.topbar > div:last-child');
-  if (headerActions && !$('#fieldChooseWorldBtn')) {
+  const headingArea = $('.topbar > div:first-child');
+  if (headingArea && !$('#fieldChooseWorldBtn')) {
     const btn = document.createElement('button');
     btn.id = 'fieldChooseWorldBtn';
     btn.className = 'field-switch-btn';
     btn.type = 'button';
     btn.textContent = '🌐 Mundos';
     btn.addEventListener('click', showHome);
-    headerActions.insertBefore(btn, headerActions.firstChild);
+    headingArea.appendChild(btn);
   }
   section('fieldWorldHome',
     '<div class="field-intro"><p class="hero-kicker">SudoProyectivo · mundos finitos</p>' +
