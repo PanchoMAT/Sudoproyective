@@ -309,47 +309,53 @@ function renderProjective() {
   $('#fieldProjectiveContent').innerHTML = html;
 }
 
-function routeGeometrySvg(p, slope) {
-  const span = p === 3 ? 250 : 310, pad = 28, step = (span-2*pad)/(p-1);
-  const colors = ['#70d6ff','#f7c948','#8ce99a','#ff8787','#c77dff','#4dd4ac'];
-  const isInf = slope === 'inf';
-  const tint = colors[isInf ? p : Number(slope)] || '#f7c948';
-  let out = '<svg class="field-geometry-svg" viewBox="0 0 ' +
-    (span+86) + ' ' + (span+50) + '" role="img" aria-label="Familia de rectas módulo ' + p + '">';
-  for (let r=0;r<p;r++) for (let c=0;c<p;c++) {
-    out += '<circle cx="' + (pad+c*step) + '" cy="' + (pad+r*step) +
-      '" r="4" fill="#e1edf8" opacity=".6"/>';
-  }
-  for (let b=0;b<p;b++) {
-    const points = isInf
-      ? Array.from({length:p},(_,r)=>({row:r,col:b}))
-      : slope===0
-        ? Array.from({length:p},(_,c)=>({row:b,col:c}))
-        : routeCells(p, Number(slope), b, 0);
-    const path = points.slice().sort((a,b)=>a.col-b.col).map((point)=>
-      (pad+point.col*step)+','+(pad+point.row*step)).join(' ');
-    out += '<polyline points="' + path + '" fill="none" stroke="' +
-      colors[b%colors.length] + '" stroke-width="3.1" stroke-linecap="round" opacity=".85"/>';
-  }
-  out += '<circle cx="' + (span+35) + '" cy="' + (span/2) +
-    '" r="13" fill="' + tint + '" opacity=".9"/>' +
-    '<text x="' + (span+35) + '" y="' + (span/2+3) +
-    '" text-anchor="middle" fill="#06131a" font-weight="900" font-size="11">P</text></svg>';
-  return out;
+function clearUltraTimers() {
+  for (const timer of ultraTimers) clearTimeout(timer);
+  ultraTimers = [];
 }
+function scheduleUltra(callback, milliseconds) {
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  ultraTimers.push(setTimeout(callback, reduced ? Math.max(60, milliseconds * .02) : milliseconds));
+}
+function startUltraNarration(item, p) {
+  clearUltraTimers();
+  const root = $('#fieldVictoryContent');
+  const svg = root.querySelector('.ultra-reveal-svg');
+  const message = root.querySelector('.field-ultra-narration');
+  const button = $('#fieldVictoryLevels');
+  button.disabled = true;
+  button.textContent = 'Observa la construcción…';
+  root.classList.add('field-ultra-victory-content');
+  const narrate = (text) => { if (message) message.textContent = text; };
+  narrate('Completaste el desafío de Ruta ' + item.slope + '.');
+  scheduleUltra(() => narrate('Unamos las rutas que acabas de crear. Todas tienen la misma inclinación —o pendiente— ' + item.slope + '.'),5600);
+  scheduleUltra(() => svg?.classList.add('phase-lines'),9000);
+  scheduleUltra(() => narrate('En cada una de las ' + p + ' rutas, los valores son distintos. Ahora los números dejan de ser lo importante: conservamos solamente las posiciones del tablero.'),15800);
+  scheduleUltra(() => svg?.classList.add('phase-points'),19000);
+  scheduleUltra(() => narrate('Hagamos que todas estas rectas se junten en un nuevo punto. Lo llamamos P_' + item.slope + '.'),24000);
+  scheduleUltra(() => svg?.classList.add('phase-infinity'),27600);
+  scheduleUltra(() => {
+    svg?.classList.add('phase-complete');
+    button.disabled = false;
+    button.textContent = 'Continuar';
+  },35000);
+}
+
 function onGameVictory({ item, p, ultra, runStars, delta, elapsed }) {
   const won = $('#fieldVictory'), title = $('#fieldVictoryTitle'),
         content = $('#fieldVictoryContent');
+  clearUltraTimers();
+  content.classList.remove('field-ultra-victory-content');
+  $('#fieldVictory').classList.toggle('field-ultra-victory',ultra);
+  $('#fieldVictoryLevels').disabled=false;
   if (ultra) {
-    title.textContent = '¡Dirección ' + item.slope + ' descubierta!';
-    content.innerHTML = '<p>Las ' + p + ' rutas de pendiente ' + item.slope +
-      ' forman una familia de rectas. Sus prolongaciones se encuentran en un ' +
-      'nuevo punto del infinito, <strong>P' + item.slope + '</strong>.</p>' +
-      routeGeometrySvg(p, item.slope) +
-      '<p class="field-geometry-note">Esquema de incidencias en ' + fieldName(p) +
-      '; el dibujo conserva la estructura modular de las rutas.</p>';
+    title.textContent = 'Ruta ' + item.slope + ' · de sudoku a geometría';
+    content.innerHTML = '<div class="field-ultra-narration" aria-live="polite"></div>' +
+      ultraFieldRevealSvg(item.solution,p,item.slope) +
+      '<p class="field-geometry-note">Construcción de la dirección en ' + fieldName(p) +
+      ': sus ' + p + ' rectas se reúnen en el punto P' + item.slope + '.</p>';
     $('#fieldVictoryNext').hidden = true;
-    $('#fieldVictoryLevels').textContent = 'Volver a Proyectivo';
+    $('#fieldVictoryLevels').textContent = 'Observa la construcción…';
   } else {
     const best = Number(getWorld(p).bestStars[item.id] || 0);
     title.textContent = runStars === 3 ? '¡Recorrido impecable!' : '¡Nivel completado!';
@@ -368,8 +374,10 @@ function onGameVictory({ item, p, ultra, runStars, delta, elapsed }) {
     $('#fieldVictoryLevels').textContent = 'Ver niveles';
   }
   won.showModal();
+  if (ultra) startUltraNarration(item,p);
 }
 function onGameExit(wasUltra, action) {
+  clearUltraTimers();
   if (action === 'next' && !wasUltra && lastItem) {
     const next = FIELD_CAMPAIGNS[selectedField].levels.find((x)=>
       x.slope===lastItem.slope && x.localNumber===lastItem.localNumber+1);
