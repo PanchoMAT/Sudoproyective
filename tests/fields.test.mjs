@@ -6,12 +6,13 @@ import { FIELD_CAMPAIGNS, FIELD_CONFIG, FIELD_STORAGE_KEY, FIELD_DIFFICULTIES,
   fieldAdd, fieldSub, fieldMul, routeId,
   fieldRouteTrophy, fieldRouteStars, fieldPlatinum, fieldHardFinished,
   fieldUltraFinished, fieldProgressSummary, blankFieldProgress,
+  readFieldProgress, writeFieldProgress,
 } from '../js/fields/core.js';
 
 assert.equal(FIELD_STORAGE_KEY, 'sudoproyectivo-fields-v1');
 let total = 0;
 let ultraTotal = 0;
-for (const p of [3,5,9]) {
+for (const p of [3,5,9,11]) {
   const cfg = FIELD_CAMPAIGNS[p];
   const per = FIELD_CONFIG[p].perDifficulty;
   assert.equal(cfg.routeCount,p-1);
@@ -49,9 +50,10 @@ for (const p of [3,5,9]) {
       assert.ok(item.puzzle.every((row,r)=>row.every((v,c)=>!v||item.solution[r][c]===v)),
         item.id+': pista incorrecta');
       assert.equal(countFieldSolutions(item.puzzle,p,m),1,item.id+': debe tener solución única');
-      const expected=p===3 ? [6,4,3] : p===5 ? [16,13,10] : [46,36,29];
+      const expected=p===3 ? [6,4,3] : p===5 ? [16,13,10] : p===9 ? [46,36,29] :
+        [[79,77,75,73,71],[67,65,63,61,59],[56,54,52,50,48]][item.group][(item.localNumber-1)%5];
       const givens=item.puzzle.flat().filter(Boolean).length;
-      assert.equal(givens,expected[item.group],item.id+': cantidad de pistas');
+      assert.equal(givens,p===11?expected:expected[item.group],item.id+': cantidad de pistas');
       total++;
     }
     const ultra=cfg.ultra.find((x)=>x.slope===m);
@@ -78,8 +80,8 @@ for (const p of [3,5,9]) {
   assert.equal(fieldUltraFinished(p,world),true);
   assert.equal(fieldProgressSummary(p,world).stars,cfg.levels.length*3);
 }
-assert.equal(total,330);
-assert.equal(ultraTotal,14);
+assert.equal(total,480);
+assert.equal(ultraTotal,24);
 
 const ui=fs.readFileSync(new URL('../js/fields/app.js',import.meta.url),'utf8');
 const game=fs.readFileSync(new URL('../js/fields/game.js',import.meta.url),'utf8');
@@ -120,7 +122,7 @@ for(let a=0;a<9;a++) {
 }
 // Cada dirección genera p rectas y todas las p+1 direcciones satisfacen
 // las incidencias combinatorias del plano proyectivo.
-for(const p of [3,5,9]){
+for(const p of [3,5,9,11]){
   const dirs=fieldDirections(p);
   assert.equal(dirs.length,p+1);
   const lines=[];
@@ -157,6 +159,11 @@ for(const p of [3,5,9]){
 const gf9=FIELD_CAMPAIGNS[9];
 assert.equal(gf9.levels.length,216);
 assert.equal(gf9.ultra.length,8);
+const gf11=FIELD_CAMPAIGNS[11];
+assert.equal(gf11.levels.length,150);
+assert.equal(gf11.ultra.length,10);
+assert.equal(FIELD_CONFIG[11].projectivePoints,133);
+for (const item of gf11.ultra) assert.equal(item.puzzle.flat().filter(Boolean).length,43);
 // Las soluciones de F9 no inducen una cuarta dirección de líneas paralelas
 // para cada símbolo (regularidad involuntaria que eliminamos en F7).
 for(const item of gf9.levels) {
@@ -171,5 +178,49 @@ for(const item of gf9.levels) {
     assert.ok(new Set(cells.map(({c})=>c)).size>1);
   }
 }
+
+// Un sudoku no debe agregar una dirección involuntaria en las posiciones
+// de un mismo símbolo, como ocurría antes de la revisión de F7.
+for (const item of gf11.levels) {
+  for (let value=1;value<=11;value++) {
+    const points=[];
+    for (let r=0;r<11;r++)for (let c=0;c<11;c++)
+      if (item.solution[r][c]===value) points.push({r,c});
+    assert.equal(points.length,11);
+    for (let m=0;m<11;m++)
+      assert.ok(new Set(points.map(({r,c})=>routeId(r,c,m,11))).size>1,
+        item.id+': alineación extra inesperada para '+value+' con pendiente '+m);
+  }
+}
+// Retrocompatibilidad: introducir F11 no debe borrar las estrellas F3/F5/F9
+// ni perder metadatos de copas anteriores.
+const originalStorage=globalThis.localStorage;
+const rawProgress={3:{bestStars:{'f3-r1-l01':3}},5:{availableStars:9},
+  9:{ultraCompleted:{'f9-ultra-r1':true}},achievements:{previousSuperPlatinumWorlds:4},
+  extraUserField:'preserve-me'};
+let persisted=JSON.stringify(rawProgress);
+globalThis.localStorage={
+  getItem(key){assert.equal(key,FIELD_STORAGE_KEY);return persisted;},
+  setItem(key,value){assert.equal(key,FIELD_STORAGE_KEY);persisted=value;},
+};
+const restored=readFieldProgress();
+assert.equal(restored[3].bestStars['f3-r1-l01'],3);
+assert.equal(restored[5].availableStars,9);
+assert.equal(restored[9].ultraCompleted['f9-ultra-r1'],true);
+assert.equal(restored[11].availableStars,0);
+assert.equal(restored.achievements.previousSuperPlatinumWorlds,4);
+restored[11].selectedRoute=10;
+writeFieldProgress(restored);
+assert.equal(JSON.parse(persisted)[3].bestStars['f3-r1-l01'],3);
+assert.equal(JSON.parse(persisted)[11].selectedRoute,10);
+assert.equal(JSON.parse(persisted).achievements.previousSuperPlatinumWorlds,4);
+if(originalStorage===undefined)delete globalThis.localStorage;
+else globalThis.localStorage=originalStorage;
+assert.match(ui,/preservePreviousSuperPlatinum/);
+assert.match(ui,/previousSuperPlatinumWorlds/);
+assert.match(ui,/fieldZoomBtn/);
+assert.match(ui,/fieldBoardWrap/);
+assert.match(ui,/circularFieldProjectiveSvg/);
+assert.match(ui,/ultraFieldRevealSvg/);
 
 console.log('fields.test.mjs: OK');
