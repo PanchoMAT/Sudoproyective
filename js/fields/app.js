@@ -271,6 +271,7 @@ function renderHub() {
   $('#fieldHubContent').innerHTML = content;
 }
 function startItem(item, ultra = false) {
+  $('#fieldGameScreen').dataset.fieldSize = String(selectedField);
   lastItem = item;
   lastUltra = ultra;
   fieldGame.open(selectedField, item, ultra);
