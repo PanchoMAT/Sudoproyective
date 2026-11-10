@@ -17,13 +17,14 @@ const smallOriginal = { 3: { bestStars: { any: 1 } }, 5: { availableStars: 4 } }
 const smallBefore = JSON.stringify(smallOriginal);
 const smallUnlocked = buildFullyUnlockedSmallFieldReviewSave(smallOriginal);
 assert.equal(JSON.stringify(smallOriginal), smallBefore);
-for (const p of [3,5,9]) {
+for (const p of [3,5,9,11]) {
   const campaign = FIELD_CAMPAIGNS[p];
   assert.equal(Object.keys(smallUnlocked[p].bestStars).length, campaign.levels.length);
   assert.equal(Object.keys(smallUnlocked[p].ultraCompleted).length, p-1);
   assert.equal(smallUnlocked[p].availableStars, campaign.levels.length*3);
   assert.equal(smallUnlocked[p].finalSeen, true);
   assert.equal(smallUnlocked.reviewAllFourSeeded, true);
+  assert.equal(smallUnlocked.reviewAllFiveSeeded, true);
 }
 const original = JSON.stringify(real);
 const unlocked = buildFullyUnlockedReviewSave(real);
@@ -83,7 +84,7 @@ assert.equal(JSON.parse(sandbox.localStorage.getItem('sudoproyective-v02')).avai
 
 sandbox.localStorage.setItem('sudoproyectivo-fields-v1', JSON.stringify(smallUnlocked));
 assert.equal(local.data.get('sudoproyectivo-fields-v1'), smallBefore,
-  'El progreso real de F3 y F5 no puede cambiar en revisión');
+  'El progreso real de F3, F5, F9 y F11 no puede cambiar en revisión');
 sandbox.localStorage.setItem('sudoproyectivo-profile-v1', '{"name":"Prueba"}');
 assert.equal(local.data.get('sudoproyectivo-profile-v1'), '{"name":"Perfil real"}',
   'El perfil real también debe quedar protegido');
