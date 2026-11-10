@@ -25,7 +25,23 @@ function platinum7() {
   return F7_LEVELS.every((item) => Number(best[item.id] || 0) === 3);
 }
 function platinum(p) { return fieldPlatinum(p, readFieldProgress()[p]); }
-function superPlatinum() { return platinum(3) && platinum(5) && platinum7() && platinum(9); }
+function superPlatinum() { return platinum(3) && platinum(5) && platinum7() && platinum(9) && platinum(11); }
+// Las distinciones ya ganadas no deben desaparecer al ampliarse la campaña.
+// Se registra una sola vez el estado histórico de los mundos disponibles antes de F11.
+function preservePreviousSuperPlatinum() {
+  const all = readFieldProgress();
+  if (all.achievements?.fiveWorldMigrationDone) return;
+  const three = platinum(3) && platinum(5) && platinum7();
+  const four = three && platinum(9);
+  all.achievements = { ...(all.achievements || {}),
+    fiveWorldMigrationDone: true,
+    previousSuperPlatinumWorlds: four ? 4 : three ? 3 : 0,
+  };
+  writeFieldProgress(all);
+}
+function previousSuperPlatinumWorlds() {
+  return Number(readFieldProgress().achievements?.previousSuperPlatinumWorlds || 0);
+}
 function getWorld(p) { return readFieldProgress()[p]; }
 function fieldName(p) { return '𝔽' + p; }
 function starsText(n) { return '★'.repeat(n) + '☆'.repeat(3 - n); }
@@ -90,7 +106,8 @@ function createUI() {
     '<div class="field-game-name"><p id="fieldGameMeta" class="eyebrow"></p><h2 id="fieldGameTitle"></h2></div>' +
     '<span id="fieldTimer" class="timer">00:00</span></div>' +
     '<div class="field-board-help">Completa los números sin repetir en filas, columnas ni rutas.</div>' +
-    '<div class="field-board-wrap"><div id="fieldBoard" class="field-board" role="grid"></div></div>' +
+    '<div class="field-board-controls"><button id="fieldZoomBtn" class="mode-btn field-zoom-btn" type="button" data-field-action="zoom" aria-pressed="false" hidden>🔍 Ampliar tablero</button></div>' +
+    '<div id="fieldBoardWrap" class="field-board-wrap"><div id="fieldBoard" class="field-board" role="grid"></div></div>' +
     '<div class="field-game-tools">' +
     '<button id="fieldNotes" class="mode-btn" type="button" aria-pressed="false">Notas ○</button>' +
     '<button id="fieldRoutes" class="mode-btn active" type="button" aria-pressed="true">Rutas ●</button>' +
@@ -129,7 +146,7 @@ function showScreen(id) {
 }
 function renderHome() {
   let html = '';
-  for (const p of [3,5,7,9]) {
+  for (const p of [3,5,7,9,11]) {
     const s = summary(p);
     const routes = p - 1;
     const perfect = p === 7 ? platinum7() : platinum(p);
@@ -147,9 +164,11 @@ function renderHome() {
     (superPlatinum() ? '🏆' : '◇') + '</div><div><strong>' +
     (superPlatinum() ? '¡Superplatino conseguido!' : 'Superplatino · el gran objetivo') +
     '</strong><p>Consigue el Platino de ' + fieldName(3) + ', ' +
-    fieldName(5) + ', ' + fieldName(7) + ' y ' + fieldName(9) + '. ' +
-    (superPlatinum() ? '¡Has dominado los cuatro mundos!' : 'Los cuatro mundos deben tener todas sus rutas en Oro.') +
-    '</p></div>';
+    fieldName(5) + ', ' + fieldName(7) + ', ' + fieldName(9) + ' y ' + fieldName(11) + '. ' +
+    (superPlatinum() ? '¡Has dominado los cinco mundos!' : 'Las cinco campañas deben tener todas sus rutas en Oro.') +
+    '</p>' + (previousSuperPlatinumWorlds() ?
+      '<p class="field-legacy-platinum">🏆 Súper Platino histórico conservado · ' +
+      previousSuperPlatinumWorlds() + ' mundos.</p>' : '') + '</div>';
 }
 function leaveOtherScreens() {
   if ($('#gameScreen')?.classList.contains('active')) $('#backBtn')?.click();
@@ -272,6 +291,10 @@ function renderHub() {
 }
 function startItem(item, ultra = false) {
   $('#fieldGameScreen').dataset.fieldSize = String(selectedField);
+  $('#fieldBoardWrap').classList.remove('zoomed');
+  $('#fieldZoomBtn').hidden = selectedField !== 11;
+  $('#fieldZoomBtn').setAttribute('aria-pressed','false');
+  $('#fieldZoomBtn').textContent = '🔍 Ampliar tablero';
   lastItem = item;
   lastUltra = ultra;
   fieldGame.open(selectedField, item, ultra);
@@ -368,7 +391,7 @@ function onGameVictory({ item, p, ultra, runStars, delta, elapsed }) {
       ' · Mejor marca: ' + starsText(best) + '</p>' +
       (fieldPlatinum(p,getWorld(p)) ? '<p>🏆 ¡Platino del mundo ' +
         fieldName(p) + ' conseguido!</p>' : '') +
-      (superPlatinum() ? '<p>🏆 ¡SUPERPLATINO! Los tres mundos están completos.</p>' : '');
+      (superPlatinum() ? '<p>🏆 ¡SÚPER PLATINO! Los cinco mundos están completos.</p>' : '');
     const cfg = FIELD_CAMPAIGNS[p];
     const next = cfg.levels.find((x)=>x.slope===item.slope && x.localNumber===item.localNumber+1);
     $('#fieldVictoryNext').hidden = !next;
@@ -522,7 +545,15 @@ function routeClick(event) {
   if(action==='reveal-replay') {revealStep=0;$('#fieldConstructionContent').replaceChildren();renderConstruction();playConstruction();return;}
   if(action==='projective-back') {renderProjective();showScreen('fieldProjectiveScreen');return;}
   if(action==='reset-world') return onWorldReset();
+  if(action==='zoom') {
+    const expanded=$('#fieldBoardWrap').classList.toggle('zoomed');
+    $('#fieldZoomBtn').setAttribute('aria-pressed',String(expanded));
+    $('#fieldZoomBtn').textContent=expanded?'🔍 Tamaño normal':'🔍 Ampliar tablero';
+    if (expanded) $('#fieldBoardWrap').scrollLeft=0;
+    return;
+  }
 }
+preservePreviousSuperPlatinum();
 createUI();
 const fieldGame = createFieldGame({ onExit:onGameExit, onVictory:onGameVictory, onToast:toast });
 document.addEventListener('click',routeClick);
@@ -531,7 +562,7 @@ if (window.__SUDOP_REVIEW__) {
   // El modo revisión histórico continúa iniciando en F7 para no cambiar sus herramientas.
   selectedField=7;
   $('#fieldChooseWorldBtn')?.classList.remove('hidden');
-} else if (['3','5','9'].includes(params.get('field'))) {
+} else if (['3','5','9','11'].includes(params.get('field'))) {
   enter(Number(params.get('field')));
 } else {
   showHome();
