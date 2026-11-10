@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sudoproyectivo-1.2.0';
+const CACHE_NAME = 'sudoproyectivo-1.3.0';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -19,6 +19,8 @@ const CORE_ASSETS = [
   './js/review.js',
   './js/review-polish.js',
   './js/fields/data.js',
+  './js/fields/data9.js',
+  './js/fields/visuals.js',
   './js/fields/core.js',
   './js/fields/game.js',
   './js/fields/app.js',
