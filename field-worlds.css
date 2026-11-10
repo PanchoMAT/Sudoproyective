@@ -150,3 +150,34 @@ body.field-alt .topbar .star-summary { display:none; }
   .field-stats strong { font-size:.95rem; }
   .field-keypad { padding-inline:8px; }
 }
+
+
+/* F9 y construcciones geométricas: misma secuencia visual que F7. */
+.field-route-element { display:block; font-size:.69rem; color:#a4e6d7; font-weight:700; line-height:1.1; }
+.field-circular-graphic { width: min(100%,760px); margin:12px auto; aspect-ratio:1; }
+.field-circular-graphic .circular-projective-svg { width:100%; height:100%; display:block; }
+.field-circular-narration { min-height:108px; display:grid; align-items:center; justify-items:center; text-align:center;
+  border-color:rgba(243,200,106,.35); background:linear-gradient(130deg,#1a2e3e,#101b31); }
+.field-circular-narration p { color:#e0edfa; font-size:clamp(.9rem,2.5vw,1.16rem); font-weight:750; }
+.field-circular-narration.final-focus { min-height:170px; border-color:rgba(243,200,106,.75);
+  background:radial-gradient(circle at 50% 30%,rgba(243,200,106,.2),transparent 70%),#101b31; }
+.field-circular-narration.final-focus p { color:#ffeaa6; font-size:clamp(1.2rem,4.5vw,1.9rem); font-weight:900; }
+#fieldFinalMessage[hidden] { display:none; }
+.field-ultra-victory { width:min(96vw,690px); max-height:94dvh; overflow-y:auto; }
+.field-ultra-victory-content .ultra-reveal-svg { width:min(100%,550px); display:block; margin:0 auto; }
+.field-ultra-narration { min-height:85px; display:grid; place-items:center; padding:12px; border:1px solid rgba(114,167,255,.3);
+  border-radius:13px; background:rgba(114,167,255,.06); color:#f5e8c9; line-height:1.45; text-align:center; font-size:clamp(.91rem,2.8vw,1.15rem); font-weight:750; }
+.field-ultra-victory .field-modal-actions button:disabled { opacity:.55; cursor:wait; }
+body.field-alt .field-world-screen { padding-bottom:120px; }
+#fieldGameScreen[data-field-size="9"] .field-board { max-width:540px; padding:5px; gap:2px; }
+#fieldGameScreen[data-field-size="9"] .field-cell { font-size:clamp(.85rem,3vw,1.4rem); border-radius:4px; }
+#fieldGameScreen[data-field-size="9"] .field-notes { font-size:clamp(.34rem,1.2vw,.55rem); }
+#fieldGameScreen[data-field-size="9"] .field-keypad { padding-inline:5px; }
+#fieldGameScreen[data-field-size="9"] .field-number-buttons { gap:3px; }
+#fieldGameScreen[data-field-size="9"] .field-digit { font-size:clamp(.82rem,3.2vw,1.1rem); min-height:45px; border-radius:8px; }
+@media(max-width:420px) {
+  #fieldGameScreen[data-field-size="9"] .field-cell { font-size:.93rem; }
+  #fieldGameScreen[data-field-size="9"] .field-notes { font-size:.35rem; }
+  .field-circular-narration { min-height:120px; }
+  .field-ultra-victory { padding:12px 8px; }
+}
