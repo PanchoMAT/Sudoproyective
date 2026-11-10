@@ -11,7 +11,7 @@ const routes = [route1, route2, route3, route4, route5, route6];
 
 export function buildFullyUnlockedSmallFieldReviewSave(base = {}) {
   const next = { ...base };
-  for (const p of [3, 5]) {
+  for (const p of [3, 5, 9]) {
     const campaign = FIELD_CAMPAIGNS[p];
     next[p] = {
       ...blankFieldProgress(),
@@ -26,6 +26,7 @@ export function buildFullyUnlockedSmallFieldReviewSave(base = {}) {
     };
   }
   next.reviewAllSmallSeeded = true;
+  next.reviewAllFourSeeded = true;
   return next;
 }
 
@@ -60,11 +61,11 @@ if (typeof window !== 'undefined'
     const shadow = reviewStore.read();
     if (!shadow.reviewAllSeeded) reviewStore.write(buildFullyUnlockedReviewSave(shadow));
     // review-bootstrap.js desvía esta clave hacia sessionStorage: jamás escribe
-    // en el guardado real de los mundos F3 y F5.
+    // en el guardado real de los mundos F3, F5 y F9.
     let fieldShadow = {};
     try { fieldShadow = JSON.parse(localStorage.getItem(FIELD_STORAGE_KEY)) || {}; }
     catch { /* copia de revisión vacía */ }
-    if (!fieldShadow.reviewAllSmallSeeded)
+    if (!fieldShadow.reviewAllFourSeeded)
       localStorage.setItem(FIELD_STORAGE_KEY, JSON.stringify(buildFullyUnlockedSmallFieldReviewSave(fieldShadow)));
     window.__SUDOP_REVIEW_FULL__ = true;
   }
