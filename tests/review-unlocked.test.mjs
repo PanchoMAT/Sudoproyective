@@ -17,12 +17,13 @@ const smallOriginal = { 3: { bestStars: { any: 1 } }, 5: { availableStars: 4 } }
 const smallBefore = JSON.stringify(smallOriginal);
 const smallUnlocked = buildFullyUnlockedSmallFieldReviewSave(smallOriginal);
 assert.equal(JSON.stringify(smallOriginal), smallBefore);
-for (const p of [3,5]) {
+for (const p of [3,5,9]) {
   const campaign = FIELD_CAMPAIGNS[p];
   assert.equal(Object.keys(smallUnlocked[p].bestStars).length, campaign.levels.length);
   assert.equal(Object.keys(smallUnlocked[p].ultraCompleted).length, p-1);
   assert.equal(smallUnlocked[p].availableStars, campaign.levels.length*3);
   assert.equal(smallUnlocked[p].finalSeen, true);
+  assert.equal(smallUnlocked.reviewAllFourSeeded, true);
 }
 const original = JSON.stringify(real);
 const unlocked = buildFullyUnlockedReviewSave(real);
