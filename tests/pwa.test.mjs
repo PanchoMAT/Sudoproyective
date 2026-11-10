@@ -38,7 +38,7 @@ assert.match(perfectSolution, /__SUDOP_SOLUTION_VIEWER_READY__/, 'El visor debe 
 assert.match(brand, /import '\.\/reset-controls\.js';/, 'Los controles seguros de reinicio deben cargarse con el núcleo');
 assert.match(puzzles, /import '\.\/pwa\.js';/);
 assert.match(serviceWorker, /CACHE_NAME/);
-assert.match(serviceWorker, /sudoproyectivo-1\.3\.0/);
+assert.match(serviceWorker, /sudoproyectivo-1\.4\.0/);
 assert.match(serviceWorker, /SKIP_WAITING/);
 assert.match(serviceWorker, /clients\.claim/);
 assert.match(serviceWorker, /manifest\.webmanifest/);
@@ -51,6 +51,7 @@ assert.match(serviceWorker, /js\/review-bootstrap\.js/);
 assert.match(serviceWorker, /js\/fields\/app\.js/);
 assert.match(serviceWorker, /js\/fields\/data\.js/);
 assert.match(serviceWorker, /js\/fields\/data9\.js/);
+assert.match(serviceWorker, /js\/fields\/data11\.js/);
 assert.match(serviceWorker, /js\/fields\/visuals\.js/);
 assert.match(serviceWorker, /field-worlds\.css/);
 
