@@ -6,6 +6,7 @@ import {
   mod, routeCells,
 } from './core.js';
 import { createFieldGame } from './game.js';
+import { fieldDirections, slopeName, circularFieldProjectiveSvg, ultraFieldRevealSvg } from './visuals.js';
 
 const $ = (selector) => document.querySelector(selector);
 const F7_KEY = 'sudoproyective-v02';
@@ -13,6 +14,7 @@ const DIFFICULTY = ['Fácil', 'Intermedio', 'Difícil'];
 const TROPHY = { Oro: '🥇', Plata: '🥈', Bronce: '🥉', Pendiente: '○' };
 let selectedField = 7, selectedRoute = 1, selectedTab = 'levels';
 let lastItem = null, lastUltra = false, animationId = null, revealStep = 0;
+let ultraTimers = [];
 
 function readF7() {
   try { return JSON.parse(localStorage.getItem(F7_KEY)) || {}; }
@@ -23,7 +25,7 @@ function platinum7() {
   return F7_LEVELS.every((item) => Number(best[item.id] || 0) === 3);
 }
 function platinum(p) { return fieldPlatinum(p, readFieldProgress()[p]); }
-function superPlatinum() { return platinum(3) && platinum(5) && platinum7(); }
+function superPlatinum() { return platinum(3) && platinum(5) && platinum7() && platinum(9); }
 function getWorld(p) { return readFieldProgress()[p]; }
 function fieldName(p) { return '𝔽' + p; }
 function starsText(n) { return '★'.repeat(n) + '☆'.repeat(3 - n); }
@@ -127,7 +129,7 @@ function showScreen(id) {
 }
 function renderHome() {
   let html = '';
-  for (const p of [3,5,7]) {
+  for (const p of [3,5,7,9]) {
     const s = summary(p);
     const routes = p - 1;
     const perfect = p === 7 ? platinum7() : platinum(p);
@@ -145,13 +147,14 @@ function renderHome() {
     (superPlatinum() ? '🏆' : '◇') + '</div><div><strong>' +
     (superPlatinum() ? '¡Superplatino conseguido!' : 'Superplatino · el gran objetivo') +
     '</strong><p>Consigue el Platino de ' + fieldName(3) + ', ' +
-    fieldName(5) + ' y ' + fieldName(7) + '. ' +
-    (superPlatinum() ? '¡Has dominado los tres mundos!' : 'Los tres mundos deben tener todas sus rutas en Oro.') +
+    fieldName(5) + ', ' + fieldName(7) + ' y ' + fieldName(9) + '. ' +
+    (superPlatinum() ? '¡Has dominado los cuatro mundos!' : 'Los cuatro mundos deben tener todas sus rutas en Oro.') +
     '</p></div>';
 }
 function leaveOtherScreens() {
   if ($('#gameScreen')?.classList.contains('active')) $('#backBtn')?.click();
   if ($('#ultraGameScreen')?.classList.contains('active')) $('#ultraBackBtn')?.click();
+  clearUltraTimers();
   if ($('#fieldVictory')?.open) $('#fieldVictory').close();
   if ($('#fieldGameScreen')?.classList.contains('active')) fieldGame.close();
   if ($('#fieldSolutionDialog')?.open) $('#fieldSolutionDialog').close();
@@ -204,6 +207,7 @@ function renderHub() {
       const medal = fieldRouteTrophy(p, m, world);
       content += '<button type="button" class="' + (m === selectedRoute ? 'active' : '') +
         '" data-field-action="route" data-route="' + m + '">Ruta ' + m +
+        (p===9?'<span class="field-route-element">'+slopeName(p,m)+'</span>':'') +
         '<small>' + TROPHY[medal] + ' ' + fieldRouteStars(p,m,world) + '★</small></button>';
     }
     content += '</div><div class="field-levels">';
@@ -254,8 +258,10 @@ function renderHub() {
       '<p><strong>2.</strong> No repitas números en ninguna columna.</p>' +
       '<p><strong>3.</strong> Tampoco repitas números en las ' + p +
       ' casillas de cada ruta, que continúa por el borde opuesto.</p>' +
-      '<p>La pendiente m define rutas mediante <strong>r − m·c ≡ b (mod ' + p +
-      ')</strong>. Las pendientes jugables son del 1 al ' + (p-1) + '.</p>' +
+      (p===9
+        ? '<p>Las rutas obedecen <strong>r − m·c = b</strong> en el cuerpo F₉. Los elementos son a+bα, con α²=2 y coeficientes módulo 3. Los símbolos 1–9 representan los nueve elementos; una ruta no siempre avanza con un salto constante de filas.</p>'
+        : '<p>La pendiente m define rutas mediante <strong>r − m·c ≡ b (mod ' + p +
+          ')</strong>. Las pendientes jugables son del 1 al ' + (p-1) + '.</p>') +
       '<p>Un nivel sin pistas usadas da 3★; con una, 2★; con dos o más, 1★. ' +
       'Las pistas cuestan 2★, 3★ o 4★ según la dificultad.</p>' +
       '<p>Al reunir las ' + (p+1) + ' direcciones (incluyendo filas y columnas) podrás ' +
@@ -487,7 +493,7 @@ if (window.__SUDOP_REVIEW__) {
   // El modo revisión histórico continúa iniciando en F7 para no cambiar sus herramientas.
   selectedField=7;
   $('#fieldChooseWorldBtn')?.classList.remove('hidden');
-} else if (params.get('field') === '3' || params.get('field') === '5') {
+} else if (['3','5','9'].includes(params.get('field'))) {
   enter(Number(params.get('field')));
 } else {
   showHome();
