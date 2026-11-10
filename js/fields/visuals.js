@@ -4,11 +4,11 @@ import { FIELD_CONFIG, routeCells } from './core.js';
 // Las posiciones en pantalla son un esquema de incidencias, no rectas euclidianas.
 export const FIELD_ROUTE_COLORS = Object.freeze([
   '#ff6b6b', '#ffd43b', '#69db7c', '#4dabf7', '#9775fa',
-  '#f783ac', '#ffa94d', '#70d6ff', '#4dd4ac',
+  '#f783ac', '#ffa94d', '#70d6ff', '#4dd4ac', '#e9aa54', '#99cdff',
 ]);
 const FAMILY_COLORS = Object.freeze([
   '#f7c948','#8ce99a','#ff8787','#c77dff','#4dd4ac',
-  '#ff922b','#70d6ff','#f06595','#b197fc','#e7cb83',
+  '#ff922b','#70d6ff','#f06595','#b197fc','#e7cb83','#65d9be','#ff9cc5',
 ]);
 const GF9_ELEMENTS = ['0','1','2','α','1+α','2+α','2α','1+2α','2+2α'];
 
@@ -68,7 +68,7 @@ export function circularFieldProjectiveSvg(p) {
     group.push('<rect class="circle-board-frame" x="'+(cx-boardHalf)+'" y="'+(cy-boardHalf)+'" width="116" height="116" rx="13" style="--family-color:'+direction.color+'"/>');
     for(let row=0;row<p;row++) for(let col=0;col<p;col++){
       const x=cx-45+col*step,y=cy-45+row*step;
-      group.push('<circle class="circle-grid-point" cx="'+x+'" cy="'+y+'" r="'+(p===9?1.45:2)+'"/>');
+      group.push('<circle class="circle-grid-point" cx="'+x+'" cy="'+y+'" r="'+(p>=11?1.2:p===9?1.45:2)+'"/>');
     }
     for(let b=0;b<p;b++){
       const color=FIELD_ROUTE_COLORS[b%FIELD_ROUTE_COLORS.length];
@@ -98,11 +98,11 @@ export function ultraFieldRevealSvg(solution, p, slope) {
   const color=fieldDirections(p).find(x=>x.key===slope).color;
   const pieces=[];
   pieces.push('<rect class="ultra-reveal-board" x="17" y="17" width="292" height="292" rx="18" style="--family-color:'+color+'"/>');
-  const half=Math.min(step-5,p===3?47:p===5?27:18);
+  const half=p>=11?(step-4)/2:Math.min(step-5,p===3?47:p===5?27:18);
   for(let row=0;row<p;row++)for(let col=0;col<p;col++){
     const x=pad+col*step,y=pad+row*step;
     pieces.push('<rect class="ultra-reveal-cell" x="'+(x-half)+'" y="'+(y-half)+'" width="'+(half*2)+'" height="'+(half*2)+'" rx="6"/>');
-    pieces.push('<text class="ultra-reveal-number" x="'+x+'" y="'+(y+6)+'" text-anchor="middle" style="font-size:'+(p===9?16:p===5?22:28)+'px">'+solution[row][col]+'</text>');
+    pieces.push('<text class="ultra-reveal-number" x="'+x+'" y="'+(y+6)+'" text-anchor="middle" style="font-size:'+(p>=11?11.5:p===9?16:p===5?22:28)+'px">'+solution[row][col]+'</text>');
     pieces.push('<circle class="ultra-reveal-point" cx="'+x+'" cy="'+y+'" r="4.2"/>');
   }
   for(let b=0;b<p;b++){
