@@ -1,5 +1,6 @@
 import { SMALL_FIELD_DATA } from './data.js';
 import { FIELD9_DATA } from './data9.js';
+import { FIELD11_DATA } from './data11.js';
 
 export const FIELD_STORAGE_KEY = 'sudoproyectivo-fields-v1';
 export const FIELD_DIFFICULTIES = ['Fácil', 'Intermedio', 'Difícil'];
@@ -7,17 +8,18 @@ export const FIELD_CONFIG = Object.freeze({
   3: Object.freeze({ p: 3, perDifficulty: 5, routeCount: 2, projectivePoints: 13 }),
   5: Object.freeze({ p: 5, perDifficulty: 7, routeCount: 4, projectivePoints: 31 }),
   9: Object.freeze({ p: 9, perDifficulty: 9, routeCount: 8, projectivePoints: 91 }),
+  11: Object.freeze({ p: 11, perDifficulty: 5, routeCount: 10, projectivePoints: 133 }),
 });
 
 function gridOf(text, p) {
   if (text.length !== p * p) throw new Error('Longitud incorrecta del tablero');
   return Array.from({ length: p }, (_, row) =>
-    Array.from({ length: p }, (_, col) => Number(text[row * p + col]))
+    Array.from({ length: p }, (_, col) => Number.parseInt(text[row * p + col], 12))
   );
 }
 
-export const FIELD_CAMPAIGNS = Object.fromEntries([3, 5, 9].map((p) => {
-  const raw = p === 9 ? FIELD9_DATA : SMALL_FIELD_DATA[p];
+export const FIELD_CAMPAIGNS = Object.fromEntries([3, 5, 9, 11].map((p) => {
+  const raw = p === 9 ? FIELD9_DATA : p === 11 ? FIELD11_DATA : SMALL_FIELD_DATA[p];
   const config = FIELD_CONFIG[p];
   const levels = raw.levels.map(([id, slope, localNumber, group, puzzle, solution]) => ({
     id, p, slope, localNumber, group,
@@ -34,7 +36,7 @@ export const FIELD_CAMPAIGNS = Object.fromEntries([3, 5, 9].map((p) => {
 export function mod(n, p) { return ((n % p) + p) % p; }
 
 // F9 = F3[α], α² = 2. Los índices 0..8 codifican a + bα mediante a+3b.
-// Para F3 y F5 se preserva exactamente la aritmética modular anterior.
+// Para F3, F5 y F11 se preserva la aritmética modular de los cuerpos primos.
 export function fieldAdd(a, b, p) {
   if (p !== 9) return mod(a + b, p);
   return mod(a % 3 + b % 3, 3) + 3 * mod(Math.floor(a / 3) + Math.floor(b / 3), 3);
@@ -133,9 +135,12 @@ export function readFieldProgress() {
       3: { ...blankFieldProgress(), ...(raw[3] || {}) },
       5: { ...blankFieldProgress(), ...(raw[5] || {}) },
       9: { ...blankFieldProgress(), ...(raw[9] || {}) },
+      11: { ...blankFieldProgress(), ...(raw[11] || {}) },
+      achievements: { ...(raw.achievements || {}) },
     };
   } catch {
-    return { 3: blankFieldProgress(), 5: blankFieldProgress(), 9: blankFieldProgress() };
+    return { 3: blankFieldProgress(), 5: blankFieldProgress(), 9: blankFieldProgress(),
+      11: blankFieldProgress(), achievements: {} };
   }
 }
 
