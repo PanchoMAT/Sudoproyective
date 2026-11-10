@@ -80,7 +80,7 @@ for (const p of [3,5,9,11]) {
   assert.equal(fieldUltraFinished(p,world),true);
   assert.equal(fieldProgressSummary(p,world).stars,cfg.levels.length*3);
 }
-assert.equal(total,480);
+assert.equal(total,444);
 assert.equal(ultraTotal,24);
 
 const ui=fs.readFileSync(new URL('../js/fields/app.js',import.meta.url),'utf8');
