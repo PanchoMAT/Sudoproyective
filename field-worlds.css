@@ -181,3 +181,33 @@ body.field-alt .field-world-screen { padding-bottom:120px; }
   .field-circular-narration { min-height:120px; }
   .field-ultra-victory { padding:12px 8px; }
 }
+
+
+/* F11: once columnas, cifras de dos dígitos y zoom desplazable en móviles. */
+.field-board-controls { display:flex; justify-content:center; margin:-2px 0 12px; }
+.field-zoom-btn { font-size:.78rem; padding:8px 15px; border-color:rgba(112,214,255,.5); color:#bde9fc; }
+.field-zoom-btn[hidden] { display:none !important; }
+.field-legacy-platinum { margin:8px 0 0; color:#f7d58b !important; font-weight:800; }
+#fieldGameScreen[data-field-size="11"] .field-board { width:min(100%,540px); max-width:540px; padding:4px; gap:2px; }
+#fieldGameScreen[data-field-size="11"] .field-cell { font-size:clamp(.77rem,2.4vw,1.22rem); border-radius:5px; }
+#fieldGameScreen[data-field-size="11"] .field-notes { font-size:clamp(.27rem,.85vw,.49rem); }
+#fieldGameScreen[data-field-size="11"] .field-keypad { padding-inline:5px; gap:4px; }
+#fieldGameScreen[data-field-size="11"] .field-number-buttons { gap:2px; }
+#fieldGameScreen[data-field-size="11"] .field-digit { min-width:0; min-height:43px; font-size:clamp(.72rem,2.7vw,1.08rem); border-radius:7px; }
+#fieldGameScreen[data-field-size="11"] .field-erase { width:38px; }
+#fieldGameScreen[data-field-size="11"] .field-board-wrap.zoomed { justify-content:flex-start; overflow-x:auto; overflow-y:hidden;
+  padding:3px 1px 12px; max-width:100%; scrollbar-width:thin; overscroll-behavior-x:contain; }
+#fieldGameScreen[data-field-size="11"] .field-board-wrap.zoomed .field-board { flex:0 0 640px;
+  width:640px; max-width:none; min-width:640px; margin:0; padding:7px; gap:3px; }
+#fieldGameScreen[data-field-size="11"] .field-board-wrap.zoomed .field-cell { font-size:1.5rem; border-radius:7px; }
+#fieldGameScreen[data-field-size="11"] .field-board-wrap.zoomed .field-notes { font-size:.59rem; }
+#fieldConstructionContent[data-field="11"] .circle-family-label { font-size:16px; }
+#fieldConstructionContent[data-field="11"] .circle-family-math { font-size:12px; }
+#fieldConstructionContent[data-field="11"] .circle-infinity-label { font-size:15px; }
+#fieldConstructionContent[data-field="11"] .circle-route { stroke-dasharray:1500; stroke-dashoffset:1500; }
+@media(max-width:450px) {
+  #fieldGameScreen[data-field-size="11"] .field-cell { font-size:.79rem; }
+  #fieldGameScreen[data-field-size="11"] .field-notes { font-size:.29rem; }
+  #fieldGameScreen[data-field-size="11"] .field-digit { font-size:.76rem; }
+  #fieldGameScreen[data-field-size="11"] .field-board-wrap.zoomed .field-cell { font-size:1.5rem; }
+}
