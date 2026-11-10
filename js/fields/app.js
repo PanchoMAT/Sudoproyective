@@ -401,71 +401,100 @@ function onWorldReset() {
   renderHub();
   toast('Progreso de ' + fieldName(p) + ' reiniciado.');
 }
+// Secuencia circular fiel al final de F7: familias, puntos del infinito y curva cerrada.
 function revealStages(p) {
-  return [...Array.from({length:p-1},(_,i)=>i+1),0,'inf','rope'];
+  return ['intro',...Array.from({length:p-1},(_,i)=>i+1),0,'inf','rope','complete'];
 }
 function renderConstruction() {
-  const p=selectedField, stages=revealStages(p), step=revealStep,
-        pointCount=p*p+p+1, current=stages[step];
-  let title, description, art;
-  if (current === 'rope') {
-    title = 'La recta del infinito';
-    description = 'Las ' + (p+1) +
-      ' direcciones dan ' + (p+1) + ' puntos del infinito. ' +
-      'Una nueva recta pasa por todos ellos. Hemos construido PG(2,' + p + ').';
-    art = '<div class="field-infinity-line">' +
-      Array.from({length:p+1},(_,i)=>'<span>P' + (i===p?'∞':i)+'</span>').join('') +
-      '<div class="field-infinity-bar"></div></div>';
-  } else {
-    title = current === 0 ? 'Rutas horizontales · m = 0' :
-      current === 'inf' ? 'Columnas · m = ∞' :
-        'Rutas de pendiente ' + current;
-    description = 'Esta dirección contiene ' + p +
-      ' rectas paralelas en el tablero afín. Añadimos su punto del infinito.';
-    art = routeGeometrySvg(p,current);
+  const p=selectedField, stages=revealStages(p), step=revealStep, current=stages[step];
+  const pointCount=p*p+p+1, root=$('#fieldConstructionContent');
+  if (!root.querySelector('.field-circular-graphic') || root.dataset.field !== String(p)) {
+    root.dataset.field=String(p);
+    root.innerHTML =
+      '<div class="field-view-head"><button data-field-action="projective-back" class="icon-btn" type="button" aria-label="Volver">←</button>' +
+      '<div><p class="eyebrow" id="fieldConstructionStage"></p><h2>Construcción de PG(2,'+p+')</h2></div></div>' +
+      '<div class="field-project-intro field-circular-narration"><p id="fieldConstructionNarration" aria-live="polite"></p></div>' +
+      '<div class="field-circular-graphic circular-projective-graphic">'+circularFieldProjectiveSvg(p)+'</div>' +
+      '<p class="projective-schematic-note">La disposición circular representa las incidencias. La curva cerrada final es una única recta: la recta del infinito.</p>' +
+      '<div class="field-stats"><div><small>Puntos</small><strong>'+pointCount+'</strong></div>' +
+      '<div><small>Rectas</small><strong>'+pointCount+'</strong></div>' +
+      '<div><small>Por recta</small><strong>'+(p+1)+'</strong></div></div>' +
+      '<div class="projective-animation-controls"><button id="fieldRevealNext" data-field-action="reveal-next" class="secondary-btn" type="button">Siguiente etapa</button>' +
+      '<button data-field-action="reveal-replay" class="secondary-btn" type="button">↻ Repetir animación</button></div>' +
+      '<div id="fieldFinalMessage" class="field-project-gate" hidden><strong>✧ ¡Plano proyectivo PG(2,'+p+') completado!</strong>' +
+      '<p>La recta del infinito pasa por los '+(p+1)+' puntos del infinito. Dos rectas se cortan en un único punto.</p>' +
+      '<button data-field-action="projective-back" class="primary-btn" type="button">Volver a Proyectivo</button></div>';
   }
-  $('#fieldConstructionContent').innerHTML =
-    '<div class="field-view-head"><button data-field-action="projective-back" class="icon-btn" type="button">←</button>' +
-    '<div><p class="eyebrow">Construcción · Etapa ' + (step+1) + '/' + stages.length +
-    '</p><h2>PG(2,' + p + ')</h2></div></div>' +
-    '<div class="field-project-intro"><h3>' + title + '</h3><p>' + description +
-    '</p><div class="field-construction-art">' + art + '</div></div>' +
-    '<div class="field-stats"><div><small>Puntos</small><strong>' + pointCount +
-    '</strong></div><div><small>Rectas</small><strong>' + pointCount +
-    '</strong></div><div><small>Por recta</small><strong>' + (p+1) +
-    '</strong></div></div>' +
-    (current==='rope'
-      ? '<div class="field-project-gate"><strong>✧ ¡Plano proyectivo completado!</strong>' +
-        '<p>Cada par de puntos determina una recta y cada par de rectas se corta una sola vez.</p>' +
-        '<button data-field-action="projective-back" class="primary-btn">Volver a Proyectivo</button></div>'
-      : '<button data-field-action="reveal-next" class="primary-btn field-reveal-next">Siguiente etapa</button>') +
-    '<button data-field-action="reveal-replay" type="button" class="secondary-btn field-reveal-replay">↻ Repetir construcción automática</button>';
-  if (current==='rope') {
+  const svg=root.querySelector('.circular-projective-svg');
+  const activeCount=Math.min(Math.max(0,step),p+1);
+  for(let i=0;i<activeCount;i++) svg.querySelector('.circle-family-'+i)?.classList.add('active');
+  if (current==='rope' || current==='complete') svg.classList.add('show-rope');
+  if (current==='complete') svg.classList.add('complete');
+  let narration;
+  if (current==='intro') {
+    narration='Ahora que completaste los desafíos, veamos nuevamente todas las construcciones.';
+  } else if (typeof current==='number' && current>0) {
+    narration=step===1
+      ? 'Cada desafío reveló una familia de '+p+' rectas con una pendiente distinta. Reuniremos las '+(p-1)+' familias en una disposición circular.'
+      : 'Incorporamos la familia de pendiente '+slopeName(p,current)+' y su punto del infinito P_'+current+'.';
+  } else if (current===0) {
+    narration='Además, para construir todas las direcciones del tablero, utilizamos durante todo el juego las rectas horizontales y verticales.';
+  } else if (current==='inf') {
+    narration='Agregaremos las horizontales como Ruta 0 y las verticales como Ruta infinito, cada una con su punto del infinito.';
+  } else if (current==='rope') {
+    narration='Ahora tenemos '+(p+1)+' puntos del infinito. Agregaremos una última recta que los reúne a todos: la recta del infinito.';
+  } else {
+    narration='¡Lo lograste! Acabas de construir el plano proyectivo PG(2,'+p+').';
+  }
+  $('#fieldConstructionStage').textContent='Etapa '+(step+1)+'/'+stages.length;
+  $('#fieldConstructionNarration').textContent=narration;
+  const finished=current==='complete';
+  $('#fieldRevealNext').disabled=finished;
+  $('#fieldRevealNext').textContent=finished?'Construcción completa':'Siguiente etapa';
+  $('#fieldFinalMessage').hidden=!finished;
+  root.querySelector('.field-circular-narration').classList.toggle('final-focus',finished);
+  if (finished) {
     const all=readFieldProgress();
     if(!all[p].finalSeen) {all[p].finalSeen=true;writeFieldProgress(all);}
   }
 }
 function beginConstruction() {
   if (!fieldUltraFinished(selectedField,getWorld(selectedField))) {
-    toast('Resuelve los desafíos Ultraexpertos para desbloquear la construcción.'); return;
+    toast('Resuelve los desafíos Ultraexpertos para desbloquear la construcción.');
+    return;
   }
   revealStep=0;
+  $('#fieldConstructionContent').replaceChildren();
   showScreen('fieldConstructionScreen');
   renderConstruction();
   playConstruction();
 }
+function constructionDelay(p,step) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return 180;
+  if (step===0) return 5600;
+  if (step===1) return 5200;
+  if (step<=p-1) return 3900;
+  if (step===p) return 6500;
+  if (step===p+1) return 7000;
+  if (step===p+2) return 7600;
+  return 1600;
+}
 function playConstruction() {
-  if (animationId) clearInterval(animationId);
-  animationId = setInterval(() => {
-    if (revealStep < revealStages(selectedField).length-1) {
-      revealStep++; renderConstruction();
-    } else { clearInterval(animationId); animationId=null; }
-  },2600);
+  if (animationId) clearTimeout(animationId);
+  if (revealStep>=revealStages(selectedField).length-1) return;
+  animationId=setTimeout(()=>{
+    animationId=null;
+    if (!$('#fieldConstructionScreen').classList.contains('active')) return;
+    revealStep++;
+    renderConstruction();
+    playConstruction();
+  },constructionDelay(selectedField,revealStep));
 }
 function nextStage() {
-  if (animationId) {clearInterval(animationId);animationId=null;}
+  if (animationId) {clearTimeout(animationId);animationId=null;}
   if (revealStep<revealStages(selectedField).length-1) revealStep++;
   renderConstruction();
+  playConstruction();
 }
 function routeClick(event) {
   const btn=event.target.closest('[data-field-action]');
@@ -489,7 +518,7 @@ function routeClick(event) {
   }
   if(action==='construct') return beginConstruction();
   if(action==='reveal-next') return nextStage();
-  if(action==='reveal-replay') {revealStep=0;renderConstruction();playConstruction();return;}
+  if(action==='reveal-replay') {revealStep=0;$('#fieldConstructionContent').replaceChildren();renderConstruction();playConstruction();return;}
   if(action==='projective-back') {renderProjective();showScreen('fieldProjectiveScreen');return;}
   if(action==='reset-world') return onWorldReset();
 }
