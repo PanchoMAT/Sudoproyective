@@ -1,10 +1,12 @@
 import { SMALL_FIELD_DATA } from './data.js';
+import { FIELD9_DATA } from './data9.js';
 
 export const FIELD_STORAGE_KEY = 'sudoproyectivo-fields-v1';
 export const FIELD_DIFFICULTIES = ['Fácil', 'Intermedio', 'Difícil'];
 export const FIELD_CONFIG = Object.freeze({
   3: Object.freeze({ p: 3, perDifficulty: 5, routeCount: 2, projectivePoints: 13 }),
   5: Object.freeze({ p: 5, perDifficulty: 7, routeCount: 4, projectivePoints: 31 }),
+  9: Object.freeze({ p: 9, perDifficulty: 9, routeCount: 8, projectivePoints: 91 }),
 });
 
 function gridOf(text, p) {
@@ -14,8 +16,8 @@ function gridOf(text, p) {
   );
 }
 
-export const FIELD_CAMPAIGNS = Object.fromEntries([3, 5].map((p) => {
-  const raw = SMALL_FIELD_DATA[p];
+export const FIELD_CAMPAIGNS = Object.fromEntries([3, 5, 9].map((p) => {
+  const raw = p === 9 ? FIELD9_DATA : SMALL_FIELD_DATA[p];
   const config = FIELD_CONFIG[p];
   const levels = raw.levels.map(([id, slope, localNumber, group, puzzle, solution]) => ({
     id, p, slope, localNumber, group,
@@ -30,10 +32,31 @@ export const FIELD_CAMPAIGNS = Object.fromEntries([3, 5].map((p) => {
 }));
 
 export function mod(n, p) { return ((n % p) + p) % p; }
-export function routeId(row, col, m, p) { return mod(row - m * col, p); }
+
+// F9 = F3[α], α² = 2. Los índices 0..8 codifican a + bα mediante a+3b.
+// Para F3 y F5 se preserva exactamente la aritmética modular anterior.
+export function fieldAdd(a, b, p) {
+  if (p !== 9) return mod(a + b, p);
+  return mod(a % 3 + b % 3, 3) + 3 * mod(Math.floor(a / 3) + Math.floor(b / 3), 3);
+}
+export function fieldSub(a, b, p) {
+  if (p !== 9) return mod(a - b, p);
+  return mod(a % 3 - b % 3, 3) + 3 * mod(Math.floor(a / 3) - Math.floor(b / 3), 3);
+}
+export function fieldMul(a, b, p) {
+  if (p !== 9) return mod(a * b, p);
+  const x = a % 3, y = Math.floor(a / 3);
+  const z = b % 3, w = Math.floor(b / 3);
+  return mod(x * z + 2 * y * w, 3) + 3 * mod(x * w + y * z, 3);
+}
+export function routeId(row, col, m, p) {
+  return fieldSub(row, fieldMul(m, col, p), p);
+}
 export function routeCells(p, m, row, col) {
   const b = routeId(row, col, m, p);
-  return Array.from({ length: p }, (_, c) => ({ row: mod(m * c + b, p), col: c }));
+  return Array.from({ length: p }, (_, c) => ({
+    row: fieldAdd(fieldMul(m, c, p), b, p), col: c,
+  }));
 }
 
 export function constraintUnits(p, m) {
@@ -43,7 +66,7 @@ export function constraintUnits(p, m) {
   for (let col = 0; col < p; col++)
     units.push(Array.from({ length: p }, (_, row) => row * p + col));
   for (let b = 0; b < p; b++)
-    units.push(Array.from({ length: p }, (_, col) => mod(m * col + b, p) * p + col));
+    units.push(Array.from({ length: p }, (_, col) => fieldAdd(fieldMul(m, col, p), b, p) * p + col));
   return units;
 }
 
@@ -109,9 +132,10 @@ export function readFieldProgress() {
     return {
       3: { ...blankFieldProgress(), ...(raw[3] || {}) },
       5: { ...blankFieldProgress(), ...(raw[5] || {}) },
+      9: { ...blankFieldProgress(), ...(raw[9] || {}) },
     };
   } catch {
-    return { 3: blankFieldProgress(), 5: blankFieldProgress() };
+    return { 3: blankFieldProgress(), 5: blankFieldProgress(), 9: blankFieldProgress() };
   }
 }
 
