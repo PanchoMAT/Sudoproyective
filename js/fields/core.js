@@ -1,12 +1,13 @@
 import { SMALL_FIELD_DATA } from './data.js';
 import { FIELD9_DATA } from './data9.js';
 import { FIELD11_DATA } from './data11.js';
+import { selectedCampaignRows } from './campaign-selection.js';
 
 export const FIELD_STORAGE_KEY = 'sudoproyectivo-fields-v1';
 export const FIELD_DIFFICULTIES = ['Fácil', 'Intermedio', 'Difícil'];
 export const FIELD_CONFIG = Object.freeze({
-  3: Object.freeze({ p: 3, perDifficulty: 5, routeCount: 2, projectivePoints: 13 }),
-  5: Object.freeze({ p: 5, perDifficulty: 7, routeCount: 4, projectivePoints: 31 }),
+  3: Object.freeze({ p: 3, perDifficulty: 3, routeCount: 2, projectivePoints: 13 }),
+  5: Object.freeze({ p: 5, perDifficulty: 5, routeCount: 4, projectivePoints: 31 }),
   9: Object.freeze({ p: 9, perDifficulty: 9, routeCount: 8, projectivePoints: 91 }),
   11: Object.freeze({ p: 11, perDifficulty: 5, routeCount: 10, projectivePoints: 133 }),
 });
@@ -21,8 +22,12 @@ function gridOf(text, p) {
 export const FIELD_CAMPAIGNS = Object.fromEntries([3, 5, 9, 11].map((p) => {
   const raw = p === 9 ? FIELD9_DATA : p === 11 ? FIELD11_DATA : SMALL_FIELD_DATA[p];
   const config = FIELD_CONFIG[p];
-  const levels = raw.levels.map(([id, slope, localNumber, group, puzzle, solution]) => ({
-    id, p, slope, localNumber, group,
+  // F3/F5 muestran una selección curada. Los IDs originales se mantienen:
+  // al renumerar el nivel visible nunca se pierden sus estrellas ni sus notas.
+  const levels = selectedCampaignRows(p, raw.levels, config).map(({
+    row: [id, slope, , group, puzzle, solution], localNumber, legacyLocalNumber,
+  }) => ({
+    id, p, slope, localNumber, legacyLocalNumber, group,
     difficulty: FIELD_DIFFICULTIES[group],
     puzzle: gridOf(puzzle, p),
     solution: gridOf(solution, p),
