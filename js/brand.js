@@ -2,7 +2,7 @@ import './reset-controls.js';
 
 export const BRAND_NAME = 'SudoProyectivo';
 export const LEGACY_BRAND_NAME = 'Sudoproyective';
-export const APP_VERSION = '1.2.0';
+export const APP_VERSION = '1.3.0';
 export const COPYRIGHT_NOTICE = '© 2026 Francisco Alegría M. · Todos los derechos reservados.';
 
 function replaceBrand(text) {
