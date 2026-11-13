@@ -728,6 +728,10 @@ function requestHint() {
     return;
   }
 
+  const balanceAfter = state.saved.availableStars - hintCost;
+  if (!window.confirm(`¿Quieres solicitar una pista para esta casilla?\n\nCosto: ${hintCost}★.\nEstrellas disponibles: ${state.saved.availableStars}★.\nSaldo después de la pista: ${balanceAfter}★.\n\nPulsa Cancelar para conservar tus estrellas.`)) return;
+  if (!window.confirm(`SEGUNDA CONFIRMACIÓN\n\nSe descontarán definitivamente ${hintCost}★ para revelar esta casilla.\n¿Confirmas el gasto de estrellas?`)) return;
+
   state.saved.availableStars -= hintCost;
   state.values[row][col] = item.solution[row][col];
   state.notes.delete(cellKey(row, col));
