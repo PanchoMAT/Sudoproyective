@@ -230,6 +230,9 @@ export function createFieldGame({ onExit, onVictory, onToast }) {
     }
     const all = readFieldProgress(), world = all[state.p], cost = HINT_COSTS[state.item.group];
     if (world.availableStars < cost) { onToast('Necesitas ' + cost + '★ para una pista.'); return; }
+    const balanceAfter = world.availableStars - cost;
+    if (!window.confirm('¿Quieres solicitar una pista para esta casilla?\n\nCosto: ' + cost + '★.\nEstrellas disponibles: ' + world.availableStars + '★.\nSaldo después de la pista: ' + balanceAfter + '★.\n\nPulsa Cancelar para conservar tus estrellas.')) return;
+    if (!window.confirm('SEGUNDA CONFIRMACIÓN\n\nSe descontarán definitivamente ' + cost + '★ para revelar esta casilla.\n¿Confirmas el gasto de estrellas?')) return;
     world.availableStars -= cost;
     writeFieldProgress(all);
     state.values[row][col] = correct;
