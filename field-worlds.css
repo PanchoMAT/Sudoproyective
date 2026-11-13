@@ -171,7 +171,7 @@ body.field-alt .topbar .star-summary { display:none; }
 body.field-alt .field-world-screen { padding-bottom:120px; }
 #fieldGameScreen[data-field-size="9"] .field-board { max-width:540px; padding:5px; gap:2px; }
 #fieldGameScreen[data-field-size="9"] .field-cell { font-size:clamp(.85rem,3vw,1.4rem); border-radius:4px; }
-#fieldGameScreen[data-field-size="9"] .field-notes { font-size:clamp(.34rem,1.2vw,.55rem); }
+#fieldGameScreen[data-field-size="9"] .field-notes { grid-template-columns:repeat(3,minmax(0,1fr)); grid-template-rows:repeat(3,minmax(0,1fr)); width:94%; height:94%; align-content:center; justify-content:center; line-height:1; font-size:clamp(.34rem,1.2vw,.55rem); }
 #fieldGameScreen[data-field-size="9"] .field-keypad { padding-inline:5px; }
 #fieldGameScreen[data-field-size="9"] .field-number-buttons { gap:3px; }
 #fieldGameScreen[data-field-size="9"] .field-digit { font-size:clamp(.82rem,3.2vw,1.1rem); min-height:45px; border-radius:8px; }
@@ -190,7 +190,7 @@ body.field-alt .field-world-screen { padding-bottom:120px; }
 .field-legacy-platinum { margin:8px 0 0; color:#f7d58b !important; font-weight:800; }
 #fieldGameScreen[data-field-size="11"] .field-board { width:min(100%,540px); max-width:540px; padding:4px; gap:2px; }
 #fieldGameScreen[data-field-size="11"] .field-cell { font-size:clamp(.77rem,2.4vw,1.22rem); border-radius:5px; }
-#fieldGameScreen[data-field-size="11"] .field-notes { font-size:clamp(.27rem,.85vw,.49rem); }
+#fieldGameScreen[data-field-size="11"] .field-notes { grid-template-columns:repeat(4,minmax(0,1fr)); grid-template-rows:repeat(3,minmax(0,1fr)); width:98%; height:94%; align-content:center; justify-content:center; line-height:1; font-size:clamp(.27rem,.85vw,.49rem); }
 #fieldGameScreen[data-field-size="11"] .field-keypad { padding-inline:5px; gap:4px; }
 #fieldGameScreen[data-field-size="11"] .field-number-buttons { gap:2px; }
 #fieldGameScreen[data-field-size="11"] .field-digit { min-width:0; min-height:43px; font-size:clamp(.72rem,2.7vw,1.08rem); border-radius:7px; }
